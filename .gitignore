@@ -8,3 +8,5 @@ build/
 *.egg-info/
 reports/
 .DS_Store
+
+data/analysis_history.db
