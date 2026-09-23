@@ -12,10 +12,12 @@ from swiss_company_intel.config import score_weights_from_mapping
 from swiss_company_intel.dashboard_logic import filter_report
 from swiss_company_intel.io import load_companies
 from swiss_company_intel.models import ScoreWeights
+from swiss_company_intel.persistence import AnalysisStore
 from swiss_company_intel.providers.bfs import BFSClient, ENTERPRISE_STATISTICS
 
 
 DEFAULT_DATA = Path("data/sample_companies.csv")
+HISTORY_DB = Path("data/analysis_history.db")
 
 
 def _load_input(uploaded_file) -> pd.DataFrame:
@@ -101,6 +103,19 @@ def main() -> None:
         st.warning("No companies match the selected filters.")
         st.stop()
 
+    store = AnalysisStore(HISTORY_DB)
+
+    save_col, history_col = st.columns([1, 2])
+    with save_col:
+        if st.button("Save analysis snapshot"):
+            run_id = store.save_analysis(report, source="streamlit")
+            st.success(f"Saved analysis run #{run_id}")
+
+    with history_col:
+        recent_runs = store.list_runs(limit=5)
+        if not recent_runs.empty:
+            st.caption(f"Saved runs: {len(recent_runs)} shown")
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Companies", len(filtered_report))
     c2.metric("Sectors", filtered_report["sector"].nunique())
@@ -125,6 +140,13 @@ def main() -> None:
     d3.metric("Revenue growth", f"{company['revenue_growth_pct']:.1f}%")
     d4.metric("Debt / equity", f"{company['debt_to_equity']:.2f}x")
     st.write(f"**Why it was flagged:** {company['reasons']}")
+
+    history = store.company_history(selected_company)
+    if not history.empty:
+        with st.expander("Historical snapshots"):
+            st.dataframe(history, use_container_width=True, hide_index=True)
+            history_chart = history.set_index("created_at")[["attention_score"]]
+            st.line_chart(history_chart)
 
     st.subheader("Attention ranking")
     st.dataframe(
