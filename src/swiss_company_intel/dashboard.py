@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from swiss_company_intel.analyzer import CompanyAnalyzer
+from swiss_company_intel.dashboard_logic import filter_report
 from swiss_company_intel.io import load_companies
 from swiss_company_intel.providers.bfs import BFSClient, ENTERPRISE_STATISTICS
 
@@ -54,29 +55,71 @@ def main() -> None:
         st.error(f"Could not analyze the dataset: {exc}")
         st.stop()
 
+    with st.sidebar:
+        st.header("Filters")
+        selected_cantons = st.multiselect(
+            "Canton",
+            options=sorted(report["canton"].unique()),
+        )
+        selected_sectors = st.multiselect(
+            "Sector",
+            options=sorted(report["sector"].unique()),
+        )
+        selected_bands = st.multiselect(
+            "Priority band",
+            options=["low", "moderate", "high", "critical"],
+        )
+
+    filtered_report = filter_report(
+        report,
+        cantons=selected_cantons,
+        sectors=selected_sectors,
+        priority_bands=selected_bands,
+    )
+
+    if filtered_report.empty:
+        st.warning("No companies match the selected filters.")
+        st.stop()
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Companies", len(report))
-    c2.metric("Sectors", report["sector"].nunique())
-    c3.metric("Average attention", f"{report['attention_score'].mean():.1f}")
+    c1.metric("Companies", len(filtered_report))
+    c2.metric("Sectors", filtered_report["sector"].nunique())
+    c3.metric("Average attention", f"{filtered_report['attention_score'].mean():.1f}")
     c4.metric(
         "High / critical",
-        int(report["priority_band"].isin(["high", "critical"]).sum()),
+        int(filtered_report["priority_band"].isin(["high", "critical"]).sum()),
     )
+
+    st.subheader("Company drill-down")
+    selected_company = st.selectbox(
+        "Select a company",
+        options=filtered_report["company"].tolist(),
+    )
+    company = filtered_report.loc[
+        filtered_report["company"] == selected_company
+    ].iloc[0]
+
+    d1, d2, d3, d4 = st.columns(4)
+    d1.metric("Attention score", f"{company['attention_score']:.1f}")
+    d2.metric("Priority", str(company["priority_band"]).title())
+    d3.metric("Revenue growth", f"{company['revenue_growth_pct']:.1f}%")
+    d4.metric("Debt / equity", f"{company['debt_to_equity']:.2f}x")
+    st.write(f"**Why it was flagged:** {company['reasons']}")
 
     st.subheader("Attention ranking")
     st.dataframe(
-        report.head(top_n),
+        filtered_report.head(top_n),
         use_container_width=True,
         hide_index=True,
     )
 
     st.subheader("Attention score by company")
-    chart = report.head(top_n).set_index("company")[["attention_score"]]
+    chart = filtered_report.head(top_n).set_index("company")[["attention_score"]]
     st.bar_chart(chart)
 
     st.subheader("Sector overview")
     sector_summary = (
-        report.groupby("sector", as_index=False)
+        filtered_report.groupby("sector", as_index=False)
         .agg(
             companies=("company", "count"),
             avg_attention=("attention_score", "mean"),
