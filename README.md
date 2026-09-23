@@ -147,3 +147,32 @@ The JSON file must provide all seven weights and they must add up to 100:
 ```
 
 The Streamlit dashboard also accepts an optional scoring-weights JSON file and displays the active configuration.
+
+
+## Official FSO enterprise-data ingestion
+
+The project can fetch a reproducible subset of official Swiss Federal Statistical Office
+(FSO/BFS) enterprise statistics and convert the PxWeb JSON-stat2 response into a tidy
+pandas DataFrame.
+
+```python
+from swiss_company_intel.providers.bfs import BFSClient
+
+client = BFSClient()
+official = client.latest_enterprise_statistics()
+
+print(official.head())
+print(official.attrs["source"])
+```
+
+The provider reads the cube metadata first, selects the latest available year, queries
+valid dimension values and caches identical API queries for 15 minutes by default.
+
+Official source:
+- Swiss Federal Statistical Office (FSO/BFS), STAT-TAB / PxWeb
+- Table: enterprises and employment by economic activity, enterprise-size group,
+  group type and year
+- https://www.pxweb.bfs.admin.ch/pxweb/en/px-x-0606010000_102/px-x-0606010000_102/px-x-0606010000_102.px/
+
+The official aggregate dataset is kept separate from the synthetic company-level demo
+dataset because the two sources have different units and schemas.
