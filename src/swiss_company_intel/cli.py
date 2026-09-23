@@ -7,7 +7,9 @@ from rich.console import Console
 from rich.table import Table
 
 from .analyzer import CompanyAnalyzer
+from .config import load_score_weights
 from .io import load_companies
+from .models import ScoreWeights
 
 app = typer.Typer(
     help="Explainable screening and benchmarking of Swiss companies.",
@@ -31,11 +33,17 @@ def analyze(
         help="Destination CSV report.",
     ),
     top: int = typer.Option(10, min=1, help="Number of rows shown in the terminal."),
+    weights_file: Path | None = typer.Option(
+        None,
+        "--weights",
+        help="Optional JSON file containing scoring weights.",
+    ),
 ) -> None:
     """Analyze a CSV portfolio and rank companies by analyst-attention score."""
     try:
         df = load_companies(input_file)
-        analyzer = CompanyAnalyzer()
+        weights = load_score_weights(weights_file) if weights_file else ScoreWeights()
+        analyzer = CompanyAnalyzer(weights)
         analyzed = analyzer.analyze(df)
         report = analyzer.report_columns(analyzed)
 

@@ -1,0 +1,9 @@
+{
+  "leverage": 18,
+  "liquidity": 16,
+  "concentration": 18,
+  "late_payment": 14,
+  "revenue_decline": 12,
+  "employee_decline": 8,
+  "anomaly": 14
+}

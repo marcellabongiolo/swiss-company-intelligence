@@ -119,3 +119,31 @@ docker compose up --build
 ```
 
 Then open `http://localhost:8501`.
+
+
+## Configurable scoring weights
+
+The default score weights can be overridden without changing source code.
+
+Use the included example configuration:
+
+```bash
+swiss-intel analyze data/sample_companies.csv \
+  --weights config/weights.example.json
+```
+
+The JSON file must provide all seven weights and they must add up to 100:
+
+```json
+{
+  "leverage": 18,
+  "liquidity": 16,
+  "concentration": 18,
+  "late_payment": 14,
+  "revenue_decline": 12,
+  "employee_decline": 8,
+  "anomaly": 14
+}
+```
+
+The Streamlit dashboard also accepts an optional scoring-weights JSON file and displays the active configuration.
