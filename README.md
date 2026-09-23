@@ -79,3 +79,43 @@ ruff check .
 ## License
 
 MIT
+
+
+## Interactive dashboard
+
+The repository includes a Streamlit dashboard for exploring the attention ranking visually.
+
+```bash
+streamlit run src/swiss_company_intel/dashboard.py
+```
+
+The dashboard supports CSV uploads, portfolio metrics, company ranking, sector summaries and a live connection check to the Swiss Federal Statistical Office (FSO/BFS) STAT-TAB API.
+
+## Official FSO / BFS provider
+
+`src/swiss_company_intel/providers/bfs.py` contains a small, testable PxWeb client. The integration is intentionally decoupled from the scoring engine so official Swiss data can later be cached, transformed or swapped without rewriting the analytics layer.
+
+```python
+from swiss_company_intel.providers.bfs import BFSClient
+
+client = BFSClient()
+metadata = client.get_metadata()
+print(client.variable_summary(metadata))
+```
+
+## Docker
+
+Build and run the dashboard with Docker:
+
+```bash
+docker build -t swiss-company-intelligence .
+docker run --rm -p 8501:8501 swiss-company-intelligence
+```
+
+Or use Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Then open `http://localhost:8501`.
