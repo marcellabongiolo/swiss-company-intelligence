@@ -1,1 +1,81 @@
-# swiss-company-intelligence
+# Swiss Company Intelligence 🇨🇭
+
+A Python-first portfolio project for **screening, benchmarking and prioritizing Swiss companies**.
+
+The project solves a realistic business problem:
+
+> **Given a portfolio of Swiss companies, which firms deserve analyst attention first because of unusual financial/operational signals?**
+
+It combines deterministic business rules with statistical anomaly detection and produces an explainable priority score.
+
+> **Important:** the included CSV is **synthetic demo data**. Company names are used only to make the example recognizable; the financial figures are not reported company results.
+
+## Why this is a strong Python portfolio project
+
+- `pandas` data pipelines
+- typed Python models
+- validation and normalization
+- feature engineering
+- robust z-score anomaly detection
+- explainable risk scoring
+- CLI with `typer`
+- terminal UX with `rich`
+- report generation
+- unit tests with `pytest`
+- linting with `ruff`
+- GitHub Actions CI
+- clean `src/` package layout
+
+## Problem solved
+
+Analysts often receive a spreadsheet with dozens or hundreds of companies. Looking at every row manually is slow.
+
+This package:
+
+1. validates the company dataset;
+2. normalizes financial and operating indicators;
+3. benchmarks each company against its sector;
+4. detects unusual values with robust statistics;
+5. calculates an explainable **attention score from 0 to 100**;
+6. lists the main reasons behind each score;
+7. exports a ranked CSV report.
+
+The score is a **screening heuristic**, not investment advice or a credit rating.
+
+## Quick start
+
+Requires Python 3.11+.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+swiss-intel analyze data/sample_companies.csv
+```
+
+## Python usage
+
+```python
+from swiss_company_intel.analyzer import CompanyAnalyzer
+from swiss_company_intel.io import load_companies
+
+df = load_companies("data/sample_companies.csv")
+result = CompanyAnalyzer().analyze(df)
+print(result.head())
+```
+
+## Swiss public-data expansion
+
+A production version can enrich the pipeline with official Swiss sources such as the Federal Statistical Office (FSO/BFS), Swiss UID register, Zefix where permitted, and cantonal/open-government datasets.
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+pytest
+ruff check .
+```
+
+## License
+
+MIT
