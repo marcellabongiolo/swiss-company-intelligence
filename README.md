@@ -196,3 +196,16 @@ Main endpoints:
 The single-company `/score` endpoint defaults the sector anomaly component to zero unless
 `sector_anomaly_strength` is supplied. Portfolio analysis calculates sector-relative
 anomalies from the submitted companies.
+
+
+## Test coverage
+
+Run the full test suite with coverage locally:
+
+```bash
+pytest -q --cov=swiss_company_intel --cov-report=term-missing
+```
+
+The project enforces a minimum total coverage of **60%**. GitHub Actions runs the
+coverage check on Python 3.11, 3.12 and 3.13 and writes the coverage table to the
+workflow job summary.
