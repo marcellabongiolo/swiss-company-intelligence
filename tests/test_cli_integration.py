@@ -73,4 +73,4 @@ def test_cli_analyze_invalid_input_returns_nonzero_exit(tmp_path):
 
     assert result.exit_code == 1
     assert "Error:" in result.stdout
-    assert "does not exist" in result.stdout
+    assert "Input file not found" in result.stdout
