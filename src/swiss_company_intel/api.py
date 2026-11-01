@@ -30,6 +30,14 @@ class CompanyInput(BaseModel):
     customer_concentration_pct: Annotated[float, Field(ge=0, le=100)]
     late_payment_pct: Annotated[float, Field(ge=0, le=100)]
 
+    @field_validator("company", "sector")
+    @classmethod
+    def validate_required_label(cls, value: str) -> str:
+        label = value.strip()
+        if not label:
+            raise ValueError("Company and sector must not be blank")
+        return label
+
     @field_validator("canton")
     @classmethod
     def validate_canton(cls, value: str) -> str:
