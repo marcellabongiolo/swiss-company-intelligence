@@ -33,8 +33,14 @@ def load_companies(path: str | Path) -> pd.DataFrame:
         raise ValueError(f"Missing required columns: {', '.join(sorted(missing))}")
 
     df = df.copy()
-    for column in ("company", "canton", "sector"):
+    for column in ("company", "sector"):
+        if df[column].isna().any():
+            raise ValueError(f"{column} must not be blank or missing")
         df[column] = df[column].astype(str).str.strip()
+        if df[column].eq("").any():
+            raise ValueError(f"{column} must not be blank or missing")
+
+    df["canton"] = df["canton"].astype(str).str.strip()
 
     df["canton"] = df["canton"].str.upper()
 
