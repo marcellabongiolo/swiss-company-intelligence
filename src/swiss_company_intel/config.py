@@ -27,6 +27,10 @@ def score_weights_from_mapping(values: dict[str, Any]) -> ScoreWeights:
     except (TypeError, ValueError) as exc:
         raise ValueError("All score weights must be numeric") from exc
 
+    nonfinite = [name for name, value in normalized.items() if not math.isfinite(value)]
+    if nonfinite:
+        raise ValueError(f"Score weights must be finite: {', '.join(nonfinite)}")
+
     negative = [name for name, value in normalized.items() if value < 0]
     if negative:
         raise ValueError(f"Score weights cannot be negative: {', '.join(negative)}")
