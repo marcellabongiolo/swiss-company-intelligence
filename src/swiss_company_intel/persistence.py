@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import sqlite3
 from pathlib import Path
 
@@ -63,6 +64,13 @@ class AnalysisStore:
         missing = sorted(required - set(report.columns))
         if missing:
             raise ValueError(f"Report missing required columns: {', '.join(missing)}")
+
+        try:
+            scores = [float(value) for value in report["attention_score"]]
+        except (TypeError, ValueError) as exc:
+            raise ValueError("attention_score must be numeric and between 0 and 100") from exc
+        if any(not math.isfinite(score) or not 0 <= score <= 100 for score in scores):
+            raise ValueError("attention_score must be finite and between 0 and 100")
 
         with self._connect() as connection:
             cursor = connection.execute(
