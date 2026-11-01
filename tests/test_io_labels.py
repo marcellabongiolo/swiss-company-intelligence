@@ -14,6 +14,6 @@ def test_import_rejects_blank_required_labels(tmp_path, field, value):
     row = dict(zip(columns, ["Example AG", "ZH", "Software", "10", "5", "15", "1", "2", "3", "10", "5"]))
     row[field] = value
     csv_file = tmp_path / "companies.csv"
-    csv_file.write_text(",".join(columns) + "\\n" + ",".join(row[column] for column in columns) + "\\n", encoding="utf-8")
+    csv_file.write_text(",".join(columns) + "\n" + ",".join(row[column] for column in columns) + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match=field):
         load_companies(csv_file)
