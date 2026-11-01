@@ -29,7 +29,12 @@ def robust_zscore(series: pd.Series) -> pd.Series:
     mad = float(np.median(np.abs(values - median)))
 
     if math.isclose(mad, 0.0, abs_tol=1e-12):
-        return pd.Series(np.zeros(len(values)), index=series.index, dtype=float)
+        if (values == median).all():
+            return pd.Series(np.zeros(len(values)), index=series.index, dtype=float)
+        # The majority may share the median while a minority is anomalous.
+        # Use a small, positive scale based on nonzero deviations in that case.
+        deviations = np.abs(values - median)
+        mad = float(np.min(deviations[deviations > 1e-12]))
 
     return 0.67448975 * (values - median) / mad
 
