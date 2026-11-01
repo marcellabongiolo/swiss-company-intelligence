@@ -69,6 +69,7 @@ def test_missing_columns_are_rejected(tmp_path):
 def test_invalid_scores_are_not_persisted(tmp_path, invalid_score):
     store = AnalysisStore(tmp_path / "history.db")
     report = sample_report()
+    report["attention_score"] = report["attention_score"].astype(object)
     report.loc[0, "attention_score"] = invalid_score
 
     with pytest.raises(ValueError, match="attention_score"):
