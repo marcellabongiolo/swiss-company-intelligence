@@ -72,3 +72,21 @@ def test_invalid_canton_returns_422():
     )
 
     assert response.status_code == 422
+
+
+def test_analyze_rejects_blank_company_and_sector():
+    for field in ("company", "sector"):
+        invalid = company("Example AG", "ZH", "Technology", 1.0)
+        invalid[field] = "   "
+        response = client.post("/analyze", json={"companies": [invalid]})
+        assert response.status_code == 422
+
+
+def test_analyze_trims_company_and_sector():
+    response = client.post(
+        "/analyze",
+        json={"companies": [company("  Example AG  ", "ZH", "  Technology  ", 1.0)]},
+    )
+    assert response.status_code == 200
+    assert response.json()[0]["company"] == "Example AG"
+    assert response.json()[0]["sector"] == "Technology"
