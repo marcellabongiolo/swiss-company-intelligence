@@ -27,6 +27,9 @@ def load_companies(path: str | Path) -> pd.DataFrame:
 
     df = pd.read_csv(path)
     df.columns = [c.strip().lower() for c in df.columns]
+    duplicated = df.columns[df.columns.duplicated()].unique().tolist()
+    if duplicated:
+        raise ValueError(f"Duplicate CSV column(s) after normalization: {', '.join(duplicated)}")
 
     missing = REQUIRED_COLUMNS - set(df.columns)
     if missing:
