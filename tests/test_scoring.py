@@ -33,3 +33,9 @@ def test_score_row_flags_risky_company():
     score, reasons = score_row(row)
     assert score == 100.0
     assert len(reasons) >= 5
+
+
+def test_robust_zscore_flags_outlier_when_mad_is_zero():
+    scores = robust_zscore(pd.Series([10.0, 10.0, 10.0, 1000.0]))
+    assert (scores.iloc[:3] == 0).all()
+    assert scores.iloc[3] > 2.5
