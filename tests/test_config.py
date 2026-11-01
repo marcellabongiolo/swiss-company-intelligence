@@ -71,3 +71,10 @@ def test_custom_weights_change_score():
 
     assert default_score == 18.0
     assert custom_score == 100.0
+
+
+@pytest.mark.parametrize("bad_value", [float("nan"), float("inf"), float("-inf"), "NaN", "Infinity"])
+def test_weights_reject_nonfinite_values(bad_value):
+    values = DEFAULT_WEIGHTS | {"anomaly": bad_value}
+    with pytest.raises(ValueError, match="finite"):
+        score_weights_from_mapping(values)
