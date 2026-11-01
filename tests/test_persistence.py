@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from swiss_company_intel.persistence import AnalysisStore
 
@@ -62,3 +63,15 @@ def test_missing_columns_are_rejected(tmp_path):
         assert "missing required columns" in str(exc)
     else:
         raise AssertionError("Expected ValueError")
+
+
+@pytest.mark.parametrize("invalid_score", [float("nan"), float("inf"), -1.0, 100.1, "not-a-number"])
+def test_invalid_scores_are_not_persisted(tmp_path, invalid_score):
+    store = AnalysisStore(tmp_path / "history.db")
+    report = sample_report()
+    report.loc[0, "attention_score"] = invalid_score
+
+    with pytest.raises(ValueError, match="attention_score"):
+        store.save_analysis(report)
+
+    assert store.list_runs().empty
