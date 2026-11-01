@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .models import REQUIRED_COLUMNS, SWISS_CANTONS
@@ -48,6 +49,9 @@ def load_companies(path: str | Path) -> pd.DataFrame:
         bad = df[NUMERIC_COLUMNS].isna().sum()
         bad = bad[bad > 0].to_dict()
         raise ValueError(f"Non-numeric or missing values in numeric columns: {bad}")
+
+    if not np.isfinite(df[NUMERIC_COLUMNS].to_numpy(dtype=float)).all():
+        raise ValueError("Numeric columns must contain only finite values")
 
     if (df["revenue_m_chf"] < 0).any():
         raise ValueError("revenue_m_chf cannot be negative")
