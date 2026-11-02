@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable
+from dataclasses import fields
 
 import numpy as np
 import pandas as pd
@@ -51,6 +52,10 @@ def anomaly_strength(zscores: Iterable[float], threshold: float = 2.5) -> float:
 
 def score_row(row: pd.Series, weights: ScoreWeights | None = None) -> tuple[float, list[str]]:
     weights = weights or ScoreWeights()
+    for field in fields(ScoreWeights):
+        value = getattr(weights, field.name)
+        if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+            raise ValueError(f"Score weight {field.name} must be finite and nonnegative")
     if not math.isclose(weights.total(), 100.0, abs_tol=1e-9):
         raise ValueError(f"Score weights must add up to 100, got {weights.total()}")
 
