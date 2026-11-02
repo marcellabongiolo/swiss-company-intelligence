@@ -50,7 +50,12 @@ def robust_zscore(series: pd.Series) -> pd.Series:
 
 
 def anomaly_strength(zscores: Iterable[float], threshold: float = 2.5) -> float:
-    max_abs = max((abs(float(z)) for z in zscores), default=0.0)
+    if not math.isfinite(threshold) or threshold < 0:
+        raise ValueError("anomaly threshold must be finite and nonnegative")
+    values = [float(z) for z in zscores]
+    if any(not math.isfinite(z) for z in values):
+        raise ValueError("anomaly z-scores must be finite")
+    max_abs = max((abs(z) for z in values), default=0.0)
     if max_abs <= threshold:
         return 0.0
     return clamp((max_abs - threshold) / 3.5)
