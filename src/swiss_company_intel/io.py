@@ -35,6 +35,9 @@ def load_companies(path: str | Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing required columns: {', '.join(sorted(missing))}")
 
+    if df.empty:
+        raise ValueError("Company dataset is empty")
+
     df = df.copy()
     for column in ("company", "sector"):
         if df[column].isna().any():
