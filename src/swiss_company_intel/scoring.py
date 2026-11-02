@@ -32,6 +32,10 @@ def linear_risk(value: float, safe: float, severe: float, higher_is_worse: bool 
 
 def robust_zscore(series: pd.Series) -> pd.Series:
     values = series.astype(float)
+    if values.empty:
+        raise ValueError("robust_zscore requires a nonempty series")
+    if not np.isfinite(values.to_numpy()).all():
+        raise ValueError("robust_zscore requires finite values")
     median = float(values.median())
     mad = float(np.median(np.abs(values - median)))
 
