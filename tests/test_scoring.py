@@ -86,3 +86,13 @@ def test_score_row_rejects_invalid_anomaly_strength():
     for invalid in (-0.1, 1.1, float("nan"), float("inf")):
         with pytest.raises(ValueError, match="sector_anomaly_strength"):
             score_row(pd.Series(base | {"sector_anomaly_strength": invalid}))
+
+
+def test_linear_risk_rejects_nonfinite_values():
+    import pytest
+
+    for invalid in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(ValueError, match="risk value must be finite"):
+            linear_risk(invalid, safe=0.8, severe=3.0)
+        with pytest.raises(ValueError, match="risk value must be finite"):
+            linear_risk(invalid, safe=1.8, severe=0.7, higher_is_worse=False)
