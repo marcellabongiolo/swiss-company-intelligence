@@ -103,3 +103,14 @@ def test_list_runs_respects_positive_limit(tmp_path):
     runs = store.list_runs(limit=1)
     assert len(runs) == 1
     assert runs.iloc[0]["source"] == "second"
+
+
+@pytest.mark.parametrize("column", ["company", "canton", "sector"])
+@pytest.mark.parametrize("invalid", [None, "", "   "])
+def test_history_rejects_missing_or_blank_labels(tmp_path, column, invalid):
+    store = AnalysisStore(tmp_path / "history.db")
+    report = sample_report()
+    report.loc[0, column] = invalid
+    with pytest.raises(ValueError, match=f"{column} must not be blank or missing"):
+        store.save_analysis(report)
+    assert store.list_runs().empty
