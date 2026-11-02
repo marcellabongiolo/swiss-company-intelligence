@@ -86,3 +86,20 @@ def test_empty_report_does_not_create_run(tmp_path):
     with pytest.raises(ValueError, match="empty analysis report"):
         store.save_analysis(empty_report)
     assert store.list_runs().empty
+
+
+@pytest.mark.parametrize("limit", [-1, 0, True, 1.5, "5"])
+def test_list_runs_rejects_invalid_limit(tmp_path, limit):
+    store = AnalysisStore(tmp_path / "history.db")
+    store.save_analysis(sample_report())
+    with pytest.raises(ValueError, match="positive integer"):
+        store.list_runs(limit=limit)
+
+
+def test_list_runs_respects_positive_limit(tmp_path):
+    store = AnalysisStore(tmp_path / "history.db")
+    store.save_analysis(sample_report(), source="first")
+    store.save_analysis(sample_report(), source="second")
+    runs = store.list_runs(limit=1)
+    assert len(runs) == 1
+    assert runs.iloc[0]["source"] == "second"
