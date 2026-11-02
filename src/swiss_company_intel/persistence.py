@@ -65,6 +65,9 @@ class AnalysisStore:
         if missing:
             raise ValueError(f"Report missing required columns: {', '.join(missing)}")
 
+        if report.empty:
+            raise ValueError("Cannot save an empty analysis report")
+
         try:
             scores = [float(value) for value in report["attention_score"]]
         except (TypeError, ValueError) as exc:
