@@ -57,3 +57,16 @@ def test_score_row_rejects_invalid_direct_weights():
     ):
         with pytest.raises(ValueError, match="finite and nonnegative"):
             score_row(row, weights)
+
+
+def test_linear_risk_rejects_invalid_threshold_order():
+    import pytest
+
+    with pytest.raises(ValueError, match="lower than severe"):
+        linear_risk(2.0, safe=3.0, severe=1.0)
+    with pytest.raises(ValueError, match="higher than severe"):
+        linear_risk(2.0, safe=1.0, severe=3.0, higher_is_worse=False)
+    with pytest.raises(ValueError, match="lower than severe"):
+        linear_risk(2.0, safe=1.0, severe=1.0)
+    with pytest.raises(ValueError, match="finite"):
+        linear_risk(2.0, safe=float("nan"), severe=3.0)
