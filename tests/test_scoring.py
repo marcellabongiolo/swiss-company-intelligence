@@ -39,3 +39,21 @@ def test_robust_zscore_flags_outlier_when_mad_is_zero():
     scores = robust_zscore(pd.Series([10.0, 10.0, 10.0, 1000.0]))
     assert (scores.iloc[:3] == 0).all()
     assert scores.iloc[3] > 2.5
+
+
+def test_score_row_rejects_invalid_direct_weights():
+    import pytest
+    from swiss_company_intel.models import ScoreWeights
+
+    row = pd.Series({
+        "debt_to_equity": 1.0, "current_ratio": 1.8,
+        "customer_concentration_pct": 15.0, "late_payment_pct": 8.0,
+        "revenue_growth_pct": 4.0, "employee_growth_pct": 3.0,
+    })
+    for weights in (
+        ScoreWeights(leverage=-1.0, liquidity=35.0),
+        ScoreWeights(leverage=float("nan")),
+        ScoreWeights(leverage=float("inf")),
+    ):
+        with pytest.raises(ValueError, match="finite and nonnegative"):
+            score_row(row, weights)
