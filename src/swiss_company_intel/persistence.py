@@ -116,6 +116,8 @@ class AnalysisStore:
 
     def list_runs(self, limit: int = 20) -> pd.DataFrame:
         """Return recent analysis runs, newest first."""
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
+            raise ValueError("limit must be a positive integer")
         with self._connect() as connection:
             return pd.read_sql_query(
                 """
