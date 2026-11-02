@@ -114,3 +114,14 @@ def test_history_rejects_missing_or_blank_labels(tmp_path, column, invalid):
     with pytest.raises(ValueError, match=f"{column} must not be blank or missing"):
         store.save_analysis(report)
     assert store.list_runs().empty
+
+
+@pytest.mark.parametrize("column", ["priority_band", "reasons"])
+@pytest.mark.parametrize("invalid", [None, "", "   "])
+def test_history_rejects_missing_priority_or_reasons(tmp_path, column, invalid):
+    store = AnalysisStore(tmp_path / "history.db")
+    report = sample_report()
+    report.loc[0, column] = invalid
+    with pytest.raises(ValueError, match=f"{column} must not be blank or missing"):
+        store.save_analysis(report)
+    assert store.list_runs().empty
