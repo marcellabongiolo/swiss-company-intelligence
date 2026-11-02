@@ -68,6 +68,10 @@ class AnalysisStore:
         if report.empty:
             raise ValueError("Cannot save an empty analysis report")
 
+        for column in ("company", "canton", "sector"):
+            if report[column].isna().any() or report[column].astype(str).str.strip().eq("").any():
+                raise ValueError(f"{column} must not be blank or missing")
+
         try:
             scores = [float(value) for value in report["attention_score"]]
         except (TypeError, ValueError) as exc:
