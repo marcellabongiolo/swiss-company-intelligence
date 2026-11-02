@@ -15,6 +15,8 @@ def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
 
 
 def linear_risk(value: float, safe: float, severe: float, higher_is_worse: bool = True) -> float:
+    if not math.isfinite(value):
+        raise ValueError("risk value must be finite")
     if not all(math.isfinite(threshold) for threshold in (safe, severe)):
         raise ValueError("safe and severe thresholds must be finite")
     if higher_is_worse and safe >= severe:
