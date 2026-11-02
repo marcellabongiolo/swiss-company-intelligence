@@ -70,3 +70,19 @@ def test_linear_risk_rejects_invalid_threshold_order():
         linear_risk(2.0, safe=1.0, severe=1.0)
     with pytest.raises(ValueError, match="finite"):
         linear_risk(2.0, safe=float("nan"), severe=3.0)
+
+
+def test_score_row_rejects_invalid_anomaly_strength():
+    import pytest
+
+    base = {
+        "debt_to_equity": 0.8,
+        "current_ratio": 1.8,
+        "customer_concentration_pct": 15.0,
+        "late_payment_pct": 8.0,
+        "revenue_growth_pct": 4.0,
+        "employee_growth_pct": 3.0,
+    }
+    for invalid in (-0.1, 1.1, float("nan"), float("inf")):
+        with pytest.raises(ValueError, match="sector_anomaly_strength"):
+            score_row(pd.Series(base | {"sector_anomaly_strength": invalid}))

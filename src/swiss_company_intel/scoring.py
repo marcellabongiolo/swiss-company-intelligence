@@ -94,6 +94,8 @@ def score_row(row: pd.Series, weights: ScoreWeights | None = None) -> tuple[floa
         reasons.append(f"workforce contraction ({row['employee_growth_pct']:.1f}% YoY)")
 
     anomaly = float(row.get("sector_anomaly_strength", 0.0))
+    if not math.isfinite(anomaly) or not 0.0 <= anomaly <= 1.0:
+        raise ValueError("sector_anomaly_strength must be finite and between 0 and 1")
     if anomaly >= 0.25:
         reasons.append("unusual sector-relative metrics")
 
