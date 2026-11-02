@@ -96,3 +96,17 @@ def test_linear_risk_rejects_nonfinite_values():
             linear_risk(invalid, safe=0.8, severe=3.0)
         with pytest.raises(ValueError, match="risk value must be finite"):
             linear_risk(invalid, safe=1.8, severe=0.7, higher_is_worse=False)
+
+
+def test_anomaly_strength_rejects_nonfinite_zscores_and_thresholds():
+    import pytest
+    from swiss_company_intel.scoring import anomaly_strength
+
+    for invalid in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(ValueError, match="z-scores must be finite"):
+            anomaly_strength([0.0, invalid])
+        with pytest.raises(ValueError, match="threshold must be finite"):
+            anomaly_strength([1.0], threshold=invalid)
+    with pytest.raises(ValueError, match="threshold must be finite and nonnegative"):
+        anomaly_strength([1.0], threshold=-1.0)
+    assert anomaly_strength([0.0, 2.5]) == 0.0
