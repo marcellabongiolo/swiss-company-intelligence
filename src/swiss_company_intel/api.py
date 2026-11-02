@@ -21,14 +21,14 @@ class CompanyInput(BaseModel):
     company: str = Field(min_length=1)
     canton: str
     sector: str = Field(min_length=1)
-    revenue_m_chf: Annotated[float, Field(ge=0)]
-    revenue_growth_pct: float
-    ebitda_margin_pct: float
-    debt_to_equity: float
-    current_ratio: float
-    employee_growth_pct: float
-    customer_concentration_pct: Annotated[float, Field(ge=0, le=100)]
-    late_payment_pct: Annotated[float, Field(ge=0, le=100)]
+    revenue_m_chf: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    revenue_growth_pct: Annotated[float, Field(allow_inf_nan=False)]
+    ebitda_margin_pct: Annotated[float, Field(allow_inf_nan=False)]
+    debt_to_equity: Annotated[float, Field(allow_inf_nan=False)]
+    current_ratio: Annotated[float, Field(allow_inf_nan=False)]
+    employee_growth_pct: Annotated[float, Field(allow_inf_nan=False)]
+    customer_concentration_pct: Annotated[float, Field(ge=0, le=100, allow_inf_nan=False)]
+    late_payment_pct: Annotated[float, Field(ge=0, le=100, allow_inf_nan=False)]
 
     @field_validator("company", "sector")
     @classmethod
@@ -48,13 +48,13 @@ class CompanyInput(BaseModel):
 
 
 class ScoreRequest(BaseModel):
-    debt_to_equity: float
-    current_ratio: float
-    customer_concentration_pct: Annotated[float, Field(ge=0, le=100)]
-    late_payment_pct: Annotated[float, Field(ge=0, le=100)]
-    revenue_growth_pct: float
-    employee_growth_pct: float
-    sector_anomaly_strength: Annotated[float, Field(ge=0, le=1)] = 0.0
+    debt_to_equity: Annotated[float, Field(allow_inf_nan=False)]
+    current_ratio: Annotated[float, Field(allow_inf_nan=False)]
+    customer_concentration_pct: Annotated[float, Field(ge=0, le=100, allow_inf_nan=False)]
+    late_payment_pct: Annotated[float, Field(ge=0, le=100, allow_inf_nan=False)]
+    revenue_growth_pct: Annotated[float, Field(allow_inf_nan=False)]
+    employee_growth_pct: Annotated[float, Field(allow_inf_nan=False)]
+    sector_anomaly_strength: Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)] = 0.0
 
 
 class ScoreResponse(BaseModel):
