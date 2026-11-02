@@ -76,3 +76,13 @@ def test_invalid_scores_are_not_persisted(tmp_path, invalid_score):
         store.save_analysis(report)
 
     assert store.list_runs().empty
+
+
+def test_empty_report_does_not_create_run(tmp_path):
+    import pytest
+
+    store = AnalysisStore(tmp_path / "history.db")
+    empty_report = sample_report().iloc[0:0]
+    with pytest.raises(ValueError, match="empty analysis report"):
+        store.save_analysis(empty_report)
+    assert store.list_runs().empty
