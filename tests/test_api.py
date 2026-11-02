@@ -90,3 +90,28 @@ def test_analyze_trims_company_and_sector():
     assert response.status_code == 200
     assert response.json()[0]["company"] == "Example AG"
     assert response.json()[0]["sector"] == "Technology"
+
+
+def test_api_models_reject_nonfinite_financial_values():
+    from pydantic import ValidationError
+    import pytest
+    from swiss_company_intel.api import CompanyInput, ScoreRequest
+
+    valid_company = company("Example AG", "ZH", "Technology", 1.0)
+    score_fields = {
+        "debt_to_equity": 1.0,
+        "current_ratio": 1.8,
+        "customer_concentration_pct": 15.0,
+        "late_payment_pct": 8.0,
+        "revenue_growth_pct": 4.0,
+        "employee_growth_pct": 3.0,
+        "sector_anomaly_strength": 0.0,
+    }
+    for field in ("revenue_m_chf", "revenue_growth_pct", "ebitda_margin_pct",
+                  "debt_to_equity", "current_ratio", "employee_growth_pct",
+                  "customer_concentration_pct", "late_payment_pct"):
+        with pytest.raises(ValidationError):
+            CompanyInput.model_validate(valid_company | {field: float("inf")})
+    for field in score_fields:
+        with pytest.raises(ValidationError):
+            ScoreRequest.model_validate(score_fields | {field: float("nan")})
