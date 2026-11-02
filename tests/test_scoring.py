@@ -110,3 +110,13 @@ def test_anomaly_strength_rejects_nonfinite_zscores_and_thresholds():
     with pytest.raises(ValueError, match="threshold must be finite and nonnegative"):
         anomaly_strength([1.0], threshold=-1.0)
     assert anomaly_strength([0.0, 2.5]) == 0.0
+
+
+def test_robust_zscore_rejects_nonfinite_or_empty_series():
+    import pytest
+
+    for invalid in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(ValueError, match="requires finite values"):
+            robust_zscore(pd.Series([1.0, invalid, 3.0]))
+    with pytest.raises(ValueError, match="nonempty series"):
+        robust_zscore(pd.Series([], dtype=float))
