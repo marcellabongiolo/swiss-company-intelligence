@@ -53,6 +53,9 @@ class AnalysisStore:
 
     def save_analysis(self, report: pd.DataFrame, source: str = "dashboard") -> int:
         """Persist one analyzed report and return the run id."""
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError("source must be a nonblank string")
+        source = source.strip()
         required = {
             "company",
             "canton",
