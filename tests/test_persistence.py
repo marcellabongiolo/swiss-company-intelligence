@@ -125,3 +125,17 @@ def test_history_rejects_missing_priority_or_reasons(tmp_path, column, invalid):
     with pytest.raises(ValueError, match=f"{column} must not be blank or missing"):
         store.save_analysis(report)
     assert store.list_runs().empty
+
+
+@pytest.mark.parametrize("source", [None, "", "   ", 123])
+def test_history_rejects_invalid_source(tmp_path, source):
+    store = AnalysisStore(tmp_path / "history.db")
+    with pytest.raises(ValueError, match="source must be a nonblank string"):
+        store.save_analysis(sample_report(), source=source)
+    assert store.list_runs().empty
+
+
+def test_history_normalizes_source_whitespace(tmp_path):
+    store = AnalysisStore(tmp_path / "history.db")
+    store.save_analysis(sample_report(), source="  dashboard  ")
+    assert store.list_runs().iloc[0]["source"] == "dashboard"
