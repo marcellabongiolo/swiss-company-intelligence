@@ -38,3 +38,18 @@ def test_analyzer_sorts_highest_score_first():
     result = CompanyAnalyzer().analyze(df)
     assert result.iloc[0]["company"] == "Watch AG"
     assert result.iloc[0]["attention_score"] > result.iloc[1]["attention_score"]
+
+
+def test_analyzer_rejects_invalid_revenue():
+    import pytest
+
+    valid = {
+        "company": "Example AG", "canton": "ZH", "sector": "Software",
+        "revenue_m_chf": 100.0, "revenue_growth_pct": 4.0,
+        "ebitda_margin_pct": 15.0, "debt_to_equity": 0.8,
+        "current_ratio": 1.8, "employee_growth_pct": 3.0,
+        "customer_concentration_pct": 15.0, "late_payment_pct": 8.0,
+    }
+    for invalid in (-1.0, float("nan"), float("inf"), "invalid"):
+        with pytest.raises(ValueError, match="revenue_m_chf"):
+            CompanyAnalyzer().analyze(pd.DataFrame([valid | {"revenue_m_chf": invalid}]))
