@@ -95,12 +95,12 @@ class AnalysisStore:
             rows = [
                 (
                     run_id,
-                    str(row.company),
-                    str(row.canton),
-                    str(row.sector),
+                    str(row.company).strip(),
+                    str(row.canton).strip(),
+                    str(row.sector).strip(),
                     float(row.attention_score),
-                    str(row.priority_band),
-                    str(row.reasons),
+                    str(row.priority_band).strip(),
+                    str(row.reasons).strip(),
                 )
                 for row in report.itertuples(index=False)
             ]
