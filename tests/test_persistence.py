@@ -154,3 +154,18 @@ def test_company_history_trims_lookup_whitespace(tmp_path):
     store.save_analysis(sample_report())
     history = store.company_history("  Alpha AG  ")
     assert history["company"].tolist() == ["Alpha AG"]
+
+
+def test_history_normalizes_stored_labels_for_lookup(tmp_path):
+    store = AnalysisStore(tmp_path / "history.db")
+    report = sample_report()
+    for column in ("company", "canton", "sector", "priority_band", "reasons"):
+        report.loc[0, column] = f"  {report.loc[0, column]}  "
+    store.save_analysis(report)
+    history = store.company_history("Alpha AG")
+    assert len(history) == 1
+    assert history.iloc[0]["company"] == "Alpha AG"
+    assert history.iloc[0]["canton"] == "ZH"
+    assert history.iloc[0]["sector"] == "Technology"
+    assert history.iloc[0]["priority_band"] == "high"
+    assert history.iloc[0]["reasons"] == "elevated leverage"
