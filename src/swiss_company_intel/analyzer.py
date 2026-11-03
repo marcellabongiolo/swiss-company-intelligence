@@ -44,6 +44,10 @@ class CompanyAnalyzer:
     def analyze(self, df: pd.DataFrame) -> pd.DataFrame:
         if df.empty:
             raise ValueError("Dataset is empty")
+        if "revenue_m_chf" in df.columns:
+            revenue = pd.to_numeric(df["revenue_m_chf"], errors="coerce")
+            if revenue.isna().any() or not revenue.map(lambda value: float("-inf") < value < float("inf")).all() or (revenue < 0).any():
+                raise ValueError("revenue_m_chf must be finite and nonnegative")
 
         result = self._add_sector_zscores(df)
 
