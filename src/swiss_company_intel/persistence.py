@@ -139,6 +139,9 @@ class AnalysisStore:
 
     def company_history(self, company: str) -> pd.DataFrame:
         """Return the historical score snapshots for one company."""
+        if not isinstance(company, str) or not company.strip():
+            raise ValueError("company must be a nonblank string")
+        company = company.strip()
         with self._connect() as connection:
             return pd.read_sql_query(
                 """

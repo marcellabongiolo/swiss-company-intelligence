@@ -139,3 +139,18 @@ def test_history_normalizes_source_whitespace(tmp_path):
     store = AnalysisStore(tmp_path / "history.db")
     store.save_analysis(sample_report(), source="  dashboard  ")
     assert store.list_runs().iloc[0]["source"] == "dashboard"
+
+
+@pytest.mark.parametrize("company", [None, "", "   ", 123])
+def test_company_history_rejects_invalid_lookup(tmp_path, company):
+    store = AnalysisStore(tmp_path / "history.db")
+    store.save_analysis(sample_report())
+    with pytest.raises(ValueError, match="company must be a nonblank string"):
+        store.company_history(company)
+
+
+def test_company_history_trims_lookup_whitespace(tmp_path):
+    store = AnalysisStore(tmp_path / "history.db")
+    store.save_analysis(sample_report())
+    history = store.company_history("  Alpha AG  ")
+    assert history["company"].tolist() == ["Alpha AG"]
