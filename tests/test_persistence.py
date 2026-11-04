@@ -189,3 +189,19 @@ def test_run_details_rejects_invalid_id(tmp_path, run_id):
     store = AnalysisStore(tmp_path / "history.db")
     with pytest.raises(ValueError, match="run_id must be a positive integer"):
         store.run_details(run_id)
+
+
+def test_saved_run_csv_export_contains_only_selected_snapshot(tmp_path):
+    from io import BytesIO
+    from swiss_company_intel.dashboard_logic import report_to_csv_bytes
+
+    store = AnalysisStore(tmp_path / "history.db")
+    first = store.save_analysis(sample_report())
+    changed = sample_report()
+    changed.loc[0, "attention_score"] = 99.0
+    store.save_analysis(changed)
+
+    saved = store.run_details(first)
+    exported = pd.read_csv(BytesIO(report_to_csv_bytes(saved)))
+    pd.testing.assert_frame_equal(exported, saved)
+    assert exported.loc[exported["company"] == "Alpha AG", "attention_score"].iloc[0] == 72.5
