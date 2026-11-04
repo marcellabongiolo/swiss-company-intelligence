@@ -1,6 +1,6 @@
 import pandas as pd
 
-from swiss_company_intel.dashboard_logic import filter_report
+from swiss_company_intel.dashboard_logic import filter_report, report_to_csv_bytes
 
 
 def sample_report() -> pd.DataFrame:
@@ -95,3 +95,17 @@ def test_minimum_attention_score_rejects_invalid_thresholds():
     for threshold in (-1, 101, float("nan"), "bad"):
         with pytest.raises(ValueError, match="min_attention_score"):
             filter_report(sample_report(), min_attention_score=threshold)
+
+
+def test_filtered_csv_export_preserves_selected_rows_and_columns():
+    from io import BytesIO
+
+    report = sample_report()
+    filtered = filter_report(report, cantons=["ZH"])
+    original = filtered.copy(deep=True)
+    payload = report_to_csv_bytes(filtered)
+    assert isinstance(payload, bytes)
+    decoded = pd.read_csv(BytesIO(payload))
+    pd.testing.assert_frame_equal(decoded, filtered)
+    pd.testing.assert_frame_equal(filtered, original)
+    assert "Unnamed: 0" not in decoded.columns
