@@ -163,3 +163,19 @@ class AnalysisStore:
                 connection,
                 params=(company,),
             )
+
+    def run_details(self, run_id: int) -> pd.DataFrame:
+        """Return the companies and scores saved in one analysis run."""
+        if isinstance(run_id, bool) or not isinstance(run_id, int) or run_id <= 0:
+            raise ValueError("run_id must be a positive integer")
+        with self._connect() as connection:
+            return pd.read_sql_query(
+                """
+                SELECT company, canton, sector, attention_score, priority_band, reasons
+                FROM company_scores
+                WHERE run_id = ?
+                ORDER BY attention_score DESC, company ASC
+                """,
+                connection,
+                params=(run_id,),
+            )
