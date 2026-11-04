@@ -1,6 +1,6 @@
 import pandas as pd
 
-from swiss_company_intel.dashboard_logic import filter_report, report_to_csv_bytes
+from swiss_company_intel.dashboard_logic import filter_report, history_chart_data, report_to_csv_bytes
 
 
 def sample_report() -> pd.DataFrame:
@@ -109,3 +109,17 @@ def test_filtered_csv_export_preserves_selected_rows_and_columns():
     pd.testing.assert_frame_equal(decoded, filtered)
     pd.testing.assert_frame_equal(filtered, original)
     assert "Unnamed: 0" not in decoded.columns
+
+
+def test_history_chart_uses_unique_run_ids_when_timestamps_match():
+    history = pd.DataFrame({
+        "run_id": [3, 1, 2],
+        "created_at": ["2026-11-03 12:00:00"] * 3,
+        "attention_score": [75.0, 30.0, 60.0],
+    })
+    original = history.copy(deep=True)
+    chart = history_chart_data(history)
+    assert chart.index.tolist() == [1, 2, 3]
+    assert chart["attention_score"].tolist() == [30.0, 60.0, 75.0]
+    assert chart.index.is_unique
+    pd.testing.assert_frame_equal(history, original)

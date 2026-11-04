@@ -9,7 +9,7 @@ import streamlit as st
 
 from swiss_company_intel.analyzer import CompanyAnalyzer
 from swiss_company_intel.config import score_weights_from_mapping
-from swiss_company_intel.dashboard_logic import filter_report, report_to_csv_bytes
+from swiss_company_intel.dashboard_logic import filter_report, history_chart_data, report_to_csv_bytes
 from swiss_company_intel.io import load_companies
 from swiss_company_intel.models import ScoreWeights
 from swiss_company_intel.persistence import AnalysisStore
@@ -156,8 +156,8 @@ def main() -> None:
     if not history.empty:
         with st.expander("Historical snapshots"):
             st.dataframe(history, use_container_width=True, hide_index=True)
-            history_chart = history.set_index("created_at")[["attention_score"]]
-            st.line_chart(history_chart)
+            st.caption("Attention score by analysis run")
+            st.line_chart(history_chart_data(history))
 
     st.subheader("Attention ranking")
     st.dataframe(
