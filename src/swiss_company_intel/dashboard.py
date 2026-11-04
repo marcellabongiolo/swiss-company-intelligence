@@ -127,10 +127,18 @@ def main() -> None:
                     options=recent_runs["id"].astype(int).tolist(),
                     format_func=lambda run_id: f"Run #{run_id}",
                 )
+                saved_report = store.run_details(selected_run_id)
                 st.dataframe(
-                    store.run_details(selected_run_id),
+                    saved_report,
                     use_container_width=True,
                     hide_index=True,
+                )
+                st.download_button(
+                    "Download saved run (CSV)",
+                    data=report_to_csv_bytes(saved_report),
+                    file_name=f"swiss_company_run_{selected_run_id}.csv",
+                    mime="text/csv",
+                    key=f"download-run-{selected_run_id}",
                 )
 
     c1, c2, c3, c4 = st.columns(4)
