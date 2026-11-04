@@ -25,7 +25,12 @@ def load_companies(path: str | Path) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"Input file not found: {path}")
 
-    df = pd.read_csv(path)
+    return validate_companies(pd.read_csv(path))
+
+
+def validate_companies(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize and validate an in-memory company dataset without mutating it."""
+    df = df.copy()
     df.columns = [c.strip().lower() for c in df.columns]
     duplicated = df.columns[df.columns.duplicated()].unique().tolist()
     if duplicated:
