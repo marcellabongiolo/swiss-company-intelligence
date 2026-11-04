@@ -10,7 +10,7 @@ import streamlit as st
 from swiss_company_intel.analyzer import CompanyAnalyzer
 from swiss_company_intel.config import score_weights_from_mapping
 from swiss_company_intel.dashboard_logic import filter_report, history_chart_data, report_to_csv_bytes
-from swiss_company_intel.io import load_companies
+from swiss_company_intel.io import load_companies, validate_companies
 from swiss_company_intel.models import ScoreWeights
 from swiss_company_intel.persistence import AnalysisStore
 from swiss_company_intel.providers.bfs import BFSClient, ENTERPRISE_STATISTICS
@@ -24,13 +24,7 @@ def _load_input(uploaded_file) -> pd.DataFrame:
     if uploaded_file is None:
         return load_companies(DEFAULT_DATA)
 
-    raw = pd.read_csv(uploaded_file)
-    temp = Path(".streamlit_uploaded_companies.csv")
-    raw.to_csv(temp, index=False)
-    try:
-        return load_companies(temp)
-    finally:
-        temp.unlink(missing_ok=True)
+    return validate_companies(pd.read_csv(uploaded_file))
 
 
 def main() -> None:
