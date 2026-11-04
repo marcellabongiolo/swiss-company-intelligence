@@ -169,3 +169,23 @@ def test_history_normalizes_stored_labels_for_lookup(tmp_path):
     assert history.iloc[0]["sector"] == "Technology"
     assert history.iloc[0]["priority_band"] == "high"
     assert history.iloc[0]["reasons"] == "elevated leverage"
+
+
+def test_run_details_returns_only_selected_snapshot_in_score_order(tmp_path):
+    store = AnalysisStore(tmp_path / "history.db")
+    first = store.save_analysis(sample_report(), source="first")
+    changed = sample_report()
+    changed.loc[0, "attention_score"] = 10.0
+    second = store.save_analysis(changed, source="second")
+    result = store.run_details(first)
+    assert result["company"].tolist() == ["Alpha AG", "Beta SA"]
+    assert result["attention_score"].tolist() == [72.5, 22.0]
+    assert store.run_details(second)["company"].tolist() == ["Beta SA", "Alpha AG"]
+    assert store.run_details(999).empty
+
+
+@pytest.mark.parametrize("run_id", [None, True, 0, -1, 1.5, "1"])
+def test_run_details_rejects_invalid_id(tmp_path, run_id):
+    store = AnalysisStore(tmp_path / "history.db")
+    with pytest.raises(ValueError, match="run_id must be a positive integer"):
+        store.run_details(run_id)

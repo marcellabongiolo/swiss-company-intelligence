@@ -120,6 +120,18 @@ def main() -> None:
         recent_runs = store.list_runs(limit=5)
         if not recent_runs.empty:
             st.caption(f"Saved runs: {len(recent_runs)} shown")
+            with st.expander("Browse saved analysis runs"):
+                st.dataframe(recent_runs, use_container_width=True, hide_index=True)
+                selected_run_id = st.selectbox(
+                    "View saved run",
+                    options=recent_runs["id"].astype(int).tolist(),
+                    format_func=lambda run_id: f"Run #{run_id}",
+                )
+                st.dataframe(
+                    store.run_details(selected_run_id),
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Companies", len(filtered_report))
