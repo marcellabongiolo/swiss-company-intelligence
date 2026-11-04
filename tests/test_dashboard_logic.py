@@ -49,3 +49,26 @@ def test_filter_report_without_filters_keeps_all_rows():
     result = filter_report(sample_report())
 
     assert len(result) == 3
+
+
+def test_company_search_is_case_insensitive_and_trims_query():
+    result = filter_report(sample_report(), company_query="  alpha  ")
+    assert result["company"].tolist() == ["Alpha AG"]
+
+
+def test_company_search_combines_with_existing_filters():
+    result = filter_report(sample_report(), company_query="a", cantons=["VD"])
+    assert result["company"].tolist() == ["Beta SA"]
+
+
+def test_company_search_treats_regex_symbols_literally():
+    report = sample_report()
+    report.loc[0, "company"] = "A.B AG"
+    assert filter_report(report, company_query=".").company.tolist() == ["A.B AG"]
+
+
+def test_company_search_does_not_mutate_original():
+    report = sample_report()
+    original = report.copy(deep=True)
+    filter_report(report, company_query="alpha")
+    pd.testing.assert_frame_equal(report, original)
