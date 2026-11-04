@@ -10,7 +10,11 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 COPY data ./data
 
-RUN pip install --upgrade pip && pip install .
+RUN pip install --upgrade pip && pip install . \
+    && useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app/data
+
+USER appuser
 
 EXPOSE 8501
 

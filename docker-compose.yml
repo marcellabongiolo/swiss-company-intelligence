@@ -4,3 +4,8 @@ services:
     ports:
       - "8501:8501"
     restart: unless-stopped
+    volumes:
+      - analysis-history:/app/data
+
+volumes:
+  analysis-history:
