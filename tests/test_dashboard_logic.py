@@ -72,3 +72,26 @@ def test_company_search_does_not_mutate_original():
     original = report.copy(deep=True)
     filter_report(report, company_query="alpha")
     pd.testing.assert_frame_equal(report, original)
+
+
+def test_minimum_attention_score_includes_boundary_and_combines_filters():
+    report = sample_report()
+    report["attention_score"] = [75.0, 30.0, 90.0]
+    result = filter_report(report, cantons=["ZH"], min_attention_score=75.0)
+    assert result["company"].tolist() == ["Alpha AG", "Gamma AG"]
+
+
+def test_minimum_attention_score_can_return_empty_without_mutation():
+    report = sample_report()
+    report["attention_score"] = [75.0, 30.0, 90.0]
+    original = report.copy(deep=True)
+    assert filter_report(report, min_attention_score=100.0).empty
+    pd.testing.assert_frame_equal(report, original)
+
+
+def test_minimum_attention_score_rejects_invalid_thresholds():
+    import pytest
+
+    for threshold in (-1, 101, float("nan"), "bad"):
+        with pytest.raises(ValueError, match="min_attention_score"):
+            filter_report(sample_report(), min_attention_score=threshold)

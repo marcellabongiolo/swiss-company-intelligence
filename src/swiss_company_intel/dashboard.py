@@ -88,6 +88,7 @@ def main() -> None:
             "Sector",
             options=sorted(report["sector"].unique()),
         )
+        min_attention_score = st.slider("Minimum attention score", 0, 100, 0)
         selected_bands = st.multiselect(
             "Priority band",
             options=["low", "moderate", "high", "critical"],
@@ -99,6 +100,7 @@ def main() -> None:
         sectors=selected_sectors,
         priority_bands=selected_bands,
         company_query=company_query,
+        min_attention_score=min_attention_score,
     )
 
     if filtered_report.empty:
