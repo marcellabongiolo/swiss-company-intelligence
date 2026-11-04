@@ -11,6 +11,7 @@ def filter_report(
     sectors: Iterable[str] | None = None,
     priority_bands: Iterable[str] | None = None,
     company_query: str = "",
+    min_attention_score: float | None = None,
 ) -> pd.DataFrame:
     """Filter an analyzed company report without mutating the original DataFrame."""
     result = report.copy()
@@ -27,5 +28,10 @@ def filter_report(
 
     if priority_bands:
         result = result[result["priority_band"].isin(priority_bands)]
+
+    if min_attention_score is not None:
+        if not isinstance(min_attention_score, (int, float)) or not 0 <= min_attention_score <= 100:
+            raise ValueError("min_attention_score must be between 0 and 100")
+        result = result[result["attention_score"] >= min_attention_score]
 
     return result.reset_index(drop=True)
