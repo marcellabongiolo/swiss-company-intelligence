@@ -40,3 +40,8 @@ def filter_report(
 def report_to_csv_bytes(report: pd.DataFrame) -> bytes:
     """Serialize the displayed report to UTF-8 CSV without a DataFrame index."""
     return report.to_csv(index=False).encode("utf-8-sig")
+
+
+def history_chart_data(history: pd.DataFrame) -> pd.DataFrame:
+    """Use the unique run ID as the historical score chart axis."""
+    return history.sort_values("run_id").set_index("run_id")[["attention_score"]].copy()
