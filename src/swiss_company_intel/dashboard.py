@@ -9,7 +9,7 @@ import streamlit as st
 
 from swiss_company_intel.analyzer import CompanyAnalyzer
 from swiss_company_intel.config import score_weights_from_mapping
-from swiss_company_intel.dashboard_logic import filter_report
+from swiss_company_intel.dashboard_logic import filter_report, report_to_csv_bytes
 from swiss_company_intel.io import load_companies
 from swiss_company_intel.models import ScoreWeights
 from swiss_company_intel.persistence import AnalysisStore
@@ -106,6 +106,13 @@ def main() -> None:
     if filtered_report.empty:
         st.warning("No companies match the selected filters.")
         st.stop()
+
+    st.download_button(
+        "Download filtered results (CSV)",
+        data=report_to_csv_bytes(filtered_report),
+        file_name="swiss_company_filtered_report.csv",
+        mime="text/csv",
+    )
 
     store = AnalysisStore(HISTORY_DB)
 
