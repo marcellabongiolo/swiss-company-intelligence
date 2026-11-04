@@ -114,6 +114,18 @@ py -3 -m venv .venv
 
 This avoids requiring PowerShell script-execution policy changes. The dashboard opens locally at `http://localhost:8501` by default. The SQLite history is stored on the machine/container running the dashboard; it is not automatically synchronized between installations. Do not use the synthetic demo figures for real-world credit or investment decisions.
 
+## Public demo deployment (Streamlit Community Cloud)
+
+The repository is prepared for deployment with [Streamlit Community Cloud](https://share.streamlit.io/). A public deployment is **not** created automatically by merging this repository.
+
+1. Sign in to Streamlit Community Cloud with GitHub and select **Create app**.
+2. Choose repository `marcellabongiolo/swiss-company-intelligence`, branch `main`, and main file path `src/swiss_company_intel/dashboard.py`.
+3. Deploy. The root `requirements.txt` installs the local Python package so imports from the `src/` layout work.
+4. Open the generated URL and verify the synthetic dataset loads, filters work, and CSV downloads succeed.
+5. After the app is working, add its actual URL to the GitHub repository's **About → Website** field and optionally to the top of this README. Do not invent a deployment URL.
+
+**Persistence warning:** Streamlit Community Cloud may restart or replace app instances. The local SQLite database (`data/analysis_history.db`) is **not durable shared storage** on this platform; saved analysis snapshots can disappear. For reliable persistent history, deploy with Docker Compose and its named volume, or use an external managed database. Do not upload confidential company data to a public demo without appropriate access controls.
+
 ## Official FSO / BFS provider
 
 `src/swiss_company_intel/providers/bfs.py` contains a small, testable PxWeb client. The integration is intentionally decoupled from the scoring engine so official Swiss data can later be cached, transformed or swapped without rewriting the analytics layer.
