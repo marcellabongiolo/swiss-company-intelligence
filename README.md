@@ -141,6 +141,8 @@ Or use Docker Compose:
 docker compose up --build
 ```
 
+Docker Compose persists saved analysis snapshots in the named `analysis-history` volume, including across container recreation. The container runs as an unprivileged user. The standalone `docker run --rm` example does **not** persist history unless you mount a writable volume at `/app/data`.
+
 Then open `http://localhost:8501`.
 
 
