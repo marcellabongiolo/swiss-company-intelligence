@@ -44,6 +44,14 @@ class CompanyAnalyzer:
     def analyze(self, df: pd.DataFrame) -> pd.DataFrame:
         if df.empty:
             raise ValueError("Dataset is empty")
+        required = {"company", "sector", *ANOMALY_COLUMNS}
+        missing = sorted(required - set(df.columns))
+        if missing:
+            raise ValueError(f"Dataset missing required columns: {', '.join(missing)}")
+        for column in ANOMALY_COLUMNS:
+            values = pd.to_numeric(df[column], errors="coerce")
+            if values.isna().any() or not values.map(lambda value: float("-inf") < value < float("inf")).all():
+                raise ValueError(f"{column} must contain finite numeric values")
         if "revenue_m_chf" in df.columns:
             revenue = pd.to_numeric(df["revenue_m_chf"], errors="coerce")
             if revenue.isna().any() or not revenue.map(lambda value: float("-inf") < value < float("inf")).all() or (revenue < 0).any():
