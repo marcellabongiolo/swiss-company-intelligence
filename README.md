@@ -2,6 +2,8 @@
 
 A Python-first portfolio project for **screening, benchmarking and prioritizing Swiss companies**.
 
+**[Open the Streamlit dashboard](https://swiss-company-intelligence-izcrwdlw9gepzap2dd85c3.streamlit.app/)** — public deployment URL (runtime verification pending).
+
 The project solves a realistic business problem:
 
 > **Given a portfolio of Swiss companies, which firms deserve analyst attention first because of unusual financial/operational signals?**
