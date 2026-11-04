@@ -53,3 +53,19 @@ def test_analyzer_rejects_invalid_revenue():
     for invalid in (-1.0, float("nan"), float("inf"), "invalid"):
         with pytest.raises(ValueError, match="revenue_m_chf"):
             CompanyAnalyzer().analyze(pd.DataFrame([valid | {"revenue_m_chf": invalid}]))
+
+
+def test_analyzer_rejects_invalid_percentage_metrics():
+    import pytest
+
+    valid = {
+        "company": "Example AG", "canton": "ZH", "sector": "Software",
+        "revenue_m_chf": 100.0, "revenue_growth_pct": 4.0,
+        "ebitda_margin_pct": 15.0, "debt_to_equity": 0.8,
+        "current_ratio": 1.8, "employee_growth_pct": 3.0,
+        "customer_concentration_pct": 15.0, "late_payment_pct": 8.0,
+    }
+    for column in ("customer_concentration_pct", "late_payment_pct"):
+        for invalid in (-1.0, 100.1, float("nan"), float("inf"), "invalid"):
+            with pytest.raises(ValueError, match=column):
+                CompanyAnalyzer().analyze(pd.DataFrame([valid | {column: invalid}]))

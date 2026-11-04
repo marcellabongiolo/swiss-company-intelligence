@@ -49,6 +49,12 @@ class CompanyAnalyzer:
             if revenue.isna().any() or not revenue.map(lambda value: float("-inf") < value < float("inf")).all() or (revenue < 0).any():
                 raise ValueError("revenue_m_chf must be finite and nonnegative")
 
+        for column in ("customer_concentration_pct", "late_payment_pct"):
+            if column in df.columns:
+                values = pd.to_numeric(df[column], errors="coerce")
+                if values.isna().any() or not values.map(lambda value: float("-inf") < value < float("inf")).all() or not values.between(0, 100).all():
+                    raise ValueError(f"{column} must be finite and between 0 and 100")
+
         result = self._add_sector_zscores(df)
 
         scored = result.apply(
