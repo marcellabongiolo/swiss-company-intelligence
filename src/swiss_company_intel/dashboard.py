@@ -79,6 +79,7 @@ def main() -> None:
             st.json(asdict(weights))
 
         st.header("Filters")
+        company_query = st.text_input("Search company name", placeholder="Company name")
         selected_cantons = st.multiselect(
             "Canton",
             options=sorted(report["canton"].unique()),
@@ -97,6 +98,7 @@ def main() -> None:
         cantons=selected_cantons,
         sectors=selected_sectors,
         priority_bands=selected_bands,
+        company_query=company_query,
     )
 
     if filtered_report.empty:

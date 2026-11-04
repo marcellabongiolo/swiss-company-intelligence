@@ -10,9 +10,14 @@ def filter_report(
     cantons: Iterable[str] | None = None,
     sectors: Iterable[str] | None = None,
     priority_bands: Iterable[str] | None = None,
+    company_query: str = "",
 ) -> pd.DataFrame:
     """Filter an analyzed company report without mutating the original DataFrame."""
     result = report.copy()
+
+    query = company_query.strip()
+    if query:
+        result = result[result["company"].str.contains(query, case=False, regex=False, na=False)]
 
     if cantons:
         result = result[result["canton"].isin(cantons)]
