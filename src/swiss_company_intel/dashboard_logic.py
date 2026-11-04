@@ -35,3 +35,8 @@ def filter_report(
         result = result[result["attention_score"] >= min_attention_score]
 
     return result.reset_index(drop=True)
+
+
+def report_to_csv_bytes(report: pd.DataFrame) -> bytes:
+    """Serialize the displayed report to UTF-8 CSV without a DataFrame index."""
+    return report.to_csv(index=False).encode("utf-8-sig")
