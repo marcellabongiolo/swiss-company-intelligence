@@ -2,7 +2,7 @@
 
 A Python-first portfolio project for **screening, benchmarking and prioritizing Swiss companies**.
 
-**[Open the Streamlit dashboard](https://swiss-company-intelligence-izcrwdlw9gepzap2dd85c3.streamlit.app/)** — public deployment URL (runtime verification pending).
+**[Open the Streamlit dashboard](https://swiss-company-intelligence-izcrwdlw9gepzap2dd85c3.streamlit.app/)** — public demo (initial load verified on 9 November 2026).
 
 The project solves a realistic business problem:
 
@@ -99,7 +99,7 @@ The dashboard supports CSV uploads, portfolio metrics, company ranking, sector s
 2. Optionally upload a JSON file of scoring weights; use **Active scoring weights** to inspect the configuration.
 3. Use **Search company name** (case-insensitive), **Canton**, **Sector**, **Priority band**, and **Minimum attention score** together to narrow the results.
 4. Review the company drill-down, explanations, rankings, and sector overview. **Download filtered results (CSV)** exports only the current filtered rows.
-5. Choose **Save analysis snapshot** to persist the **complete analyzed report** (not just the filtered subset) to the local SQLite database at `data/analysis_history.db`.
+5. Choose **Save analysis snapshot** to persist the **complete analyzed report** (not just the filtered subset) to a temporary SQLite database isolated to the current browser session.
 6. Under **Browse saved analysis runs**, select a run to inspect or download its historical scores. Historical snapshots are not recalculated when scoring weights or input data change.
 
 CSV uploads must include company, canton, sector, and the numeric fields shown in `data/sample_companies.csv`. The importer validates missing/duplicate columns, Swiss canton codes, numeric values, and percentage bounds. Uploaded CSV data is validated in memory without a shared temporary file.
@@ -114,7 +114,7 @@ py -3 -m venv .venv
 .\\.venv\\Scripts\\python.exe -m streamlit run src/swiss_company_intel/dashboard.py
 ```
 
-This avoids requiring PowerShell script-execution policy changes. The dashboard opens locally at `http://localhost:8501` by default. The SQLite history is stored on the machine/container running the dashboard; it is not automatically synchronized between installations. Do not use the synthetic demo figures for real-world credit or investment decisions.
+This avoids requiring PowerShell script-execution policy changes. The dashboard opens locally at `http://localhost:8501` by default. Dashboard history is isolated per browser session in a temporary directory on the server. It may disappear after disconnection, a new session or an app restart; download snapshots you want to keep. Do not use the synthetic demo figures for real-world credit or investment decisions.
 
 ## Public demo deployment (Streamlit Community Cloud)
 
@@ -126,7 +126,7 @@ The repository is prepared for deployment with [Streamlit Community Cloud](https
 4. Open the generated URL and verify the synthetic dataset loads, filters work, and CSV downloads succeed.
 5. After the app is working, add its actual URL to the GitHub repository's **About → Website** field and optionally to the top of this README. Do not invent a deployment URL.
 
-**Persistence warning:** Streamlit Community Cloud may restart or replace app instances. The local SQLite database (`data/analysis_history.db`) is **not durable shared storage** on this platform; saved analysis snapshots can disappear. For reliable persistent history, deploy with Docker Compose and its named volume, or use an external managed database. Do not upload confidential company data to a public demo without appropriate access controls.
+**Session history and privacy:** Dashboard snapshots use a separate temporary SQLite database for each Streamlit session. Visitors cannot browse another session's runs through this UI. History is not durable and is not restored in a new session, including with Docker Compose. Download snapshots to keep them. The standalone `AnalysisStore` Python API still supports explicit persistent paths for trusted local workflows; a multi-user persistent service requires authenticated ownership and an external database. Do not upload confidential company data to a public demo.
 
 ## Official FSO / BFS provider
 
@@ -155,7 +155,7 @@ Or use Docker Compose:
 docker compose up --build
 ```
 
-Docker Compose persists saved analysis snapshots in the named `analysis-history` volume, including across container recreation. The container runs as an unprivileged user. The standalone `docker run --rm` example does **not** persist history unless you mount a writable volume at `/app/data`.
+The container runs as an unprivileged user. Dashboard snapshots remain temporary and session-isolated under both Docker and Compose. The existing `/app/data` volume is not used for browser-session history; it is available for explicit trusted-local `AnalysisStore` workflows.
 
 Then open `http://localhost:8501`.
 
