@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 import streamlit as st
@@ -17,7 +18,13 @@ from swiss_company_intel.providers.bfs import BFSClient, ENTERPRISE_STATISTICS
 
 
 DEFAULT_DATA = Path("data/sample_companies.csv")
-HISTORY_DB = Path("data/analysis_history.db")
+def _session_store() -> AnalysisStore:
+    """Keep each browser session's history in its own temporary directory."""
+    key = "_analysis_history_directory"
+    if key not in st.session_state:
+        st.session_state[key] = TemporaryDirectory(prefix="swiss-intel-session-")
+    directory = st.session_state[key]
+    return AnalysisStore(Path(directory.name) / "history.db")
 
 
 def _load_input(uploaded_file) -> pd.DataFrame:
@@ -108,7 +115,8 @@ def main() -> None:
         mime="text/csv",
     )
 
-    store = AnalysisStore(HISTORY_DB)
+    store = _session_store()
+    st.caption("Saved snapshots are private to this browser session and temporary.")
 
     save_col, history_col = st.columns([1, 2])
     with save_col:
