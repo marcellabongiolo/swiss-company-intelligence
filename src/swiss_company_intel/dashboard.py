@@ -11,6 +11,7 @@ import streamlit as st
 from swiss_company_intel.analyzer import CompanyAnalyzer
 from swiss_company_intel.config import score_weights_from_mapping
 from swiss_company_intel.dashboard_logic import filter_report, history_chart_data, report_to_csv_bytes
+from swiss_company_intel.executive_report import executive_report_html
 from swiss_company_intel.io import load_companies, validate_companies
 from swiss_company_intel.models import ScoreWeights
 from swiss_company_intel.persistence import AnalysisStore
@@ -140,6 +141,14 @@ def main() -> None:
         data=report_to_csv_bytes(filtered_report),
         file_name="swiss_company_filtered_report.csv",
         mime="text/csv",
+    )
+
+    st.download_button(
+        "📄 Baixar relatório executivo (HTML para imprimir em PDF)",
+        data=executive_report_html(filtered_report),
+        file_name="swiss_company_relatorio_executivo.html",
+        mime="text/html",
+        help="Abra o HTML baixado no navegador e escolha Imprimir → Salvar como PDF.",
     )
 
     store = _session_store()
