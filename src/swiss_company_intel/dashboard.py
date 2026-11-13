@@ -136,6 +136,7 @@ def main() -> None:
         st.warning("No companies match the selected filters.")
         st.stop()
 
+    store = _session_store()
     st.caption("Navegue pelas áreas abaixo. Os filtros da barra lateral afetam as análises e os relatórios.")
     tab_overview, tab_companies, tab_simulator, tab_regions, tab_reports, tab_sources = st.tabs(
         ["📊 Visão geral", "🏢 Empresas", "🧪 Simulador", "🗺️ Regiões",
@@ -388,7 +389,6 @@ def main() -> None:
             help="Abra o HTML baixado no navegador e escolha Imprimir → Salvar como PDF.",
         )
 
-        store = _session_store()
         st.caption("Saved snapshots are private to this browser session and temporary.")
 
         save_col, history_col = st.columns([1, 2])
