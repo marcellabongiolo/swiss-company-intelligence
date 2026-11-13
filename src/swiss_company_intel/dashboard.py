@@ -285,6 +285,77 @@ def main() -> None:
                 "crescimento e liquidez não são equivalentes a dívida e atrasos."
             )
 
+    st.subheader("🧪 Simulador de cenários hipotéticos")
+    st.caption(
+        "Altere indicadores de uma empresa e veja como a pontuação mudaria. "
+        "A simulação é educativa, não é uma previsão financeira."
+    )
+    simulation_company = st.selectbox(
+        "Empresa para simular", options=companies["company"].tolist(),
+        key="simulation-company",
+    )
+    original_row = companies.loc[
+        companies["company"] == simulation_company
+    ].iloc[0]
+    sim_left, sim_right = st.columns(2)
+    with sim_left:
+        simulated_growth = st.number_input(
+            "Crescimento da receita (%)", min_value=-100.0, max_value=200.0,
+            value=float(original_row["revenue_growth_pct"]), step=1.0,
+        )
+        simulated_debt = st.number_input(
+            "Dívida / patrimônio", min_value=0.0, max_value=20.0,
+            value=float(original_row["debt_to_equity"]), step=0.1,
+        )
+        simulated_liquidity = st.number_input(
+            "Liquidez corrente", min_value=0.0, max_value=20.0,
+            value=float(original_row["current_ratio"]), step=0.1,
+        )
+    with sim_right:
+        simulated_concentration = st.number_input(
+            "Concentração de clientes (%)", min_value=0.0, max_value=100.0,
+            value=float(original_row["customer_concentration_pct"]), step=1.0,
+        )
+        simulated_late = st.number_input(
+            "Pagamentos atrasados (%)", min_value=0.0, max_value=100.0,
+            value=float(original_row["late_payment_pct"]), step=1.0,
+        )
+        simulated_employees = st.number_input(
+            "Crescimento dos funcionários (%)", min_value=-100.0, max_value=200.0,
+            value=float(original_row["employee_growth_pct"]), step=1.0,
+        )
+    scenario_data = companies.copy()
+    scenario_mask = scenario_data["company"] == simulation_company
+    scenario_data.loc[scenario_mask, "revenue_growth_pct"] = simulated_growth
+    scenario_data.loc[scenario_mask, "debt_to_equity"] = simulated_debt
+    scenario_data.loc[scenario_mask, "current_ratio"] = simulated_liquidity
+    scenario_data.loc[scenario_mask, "customer_concentration_pct"] = simulated_concentration
+    scenario_data.loc[scenario_mask, "late_payment_pct"] = simulated_late
+    scenario_data.loc[scenario_mask, "employee_growth_pct"] = simulated_employees
+    scenario_report = analyzer.analyze(scenario_data)
+    original_score = float(
+        analyzed.loc[analyzed["company"] == simulation_company, "attention_score"].iloc[0]
+    )
+    simulated_result = scenario_report.loc[
+        scenario_report["company"] == simulation_company
+    ].iloc[0]
+    scenario_score = float(simulated_result["attention_score"])
+    score_left, score_right = st.columns(2)
+    with score_left:
+        st.metric("Pontuação original", f"{original_score:.1f} / 100")
+    with score_right:
+        st.metric(
+            "Pontuação simulada", f"{scenario_score:.1f} / 100",
+            delta=f"{scenario_score - original_score:+.1f} pontos",
+            delta_color="inverse",
+        )
+    st.write(f"**Sinais no cenário:** {simulated_result['reasons']}")
+    st.caption(
+        "A simulação recalcula a análise de todo o conjunto, inclusive anomalias "
+        "relativas ao setor. Os dados carregados, o relatório original e o "
+        "histórico salvo permanecem inalterados."
+    )
+
     st.subheader("Company drill-down")
     selected_company = st.selectbox(
         "Select a company",
