@@ -42,7 +42,7 @@ def main() -> None:
         layout="wide",
     )
 
-    st.title("🇨🇭 Swiss Company Intelligence")
+    st.title("Swiss Company Intelligence 🇨🇭")
     st.caption(
         "Explainable company screening with Python, sector-relative anomaly detection "
         "and optional official Swiss FSO metadata."
