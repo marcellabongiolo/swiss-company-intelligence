@@ -187,6 +187,73 @@ def main() -> None:
 
     st.caption("Interpretação: pontuação mais alta = maior prioridade de revisão, não maior risco comprovado.")
 
+    st.subheader("🧭 Visão geral: prioridades de análise")
+    st.caption(
+        "Pontuações mais altas significam mais sinais para investigar, não uma "
+        "probabilidade de falência. Os dados das empresas são fictícios."
+    )
+    band_order = ["low", "moderate", "high", "critical"]
+    band_names = {
+        "low": "Baixa", "moderate": "Moderada",
+        "high": "Alta", "critical": "Crítica",
+    }
+    distribution = (
+        filtered_report["priority_band"].value_counts()
+        .reindex(band_order, fill_value=0)
+        .rename(index=band_names)
+    )
+    chart_left, chart_right = st.columns(2)
+    with chart_left:
+        st.markdown("**Empresas por nível de atenção**")
+        st.bar_chart(distribution)
+    with chart_right:
+        st.markdown("**Atenção média por setor**")
+        sector_attention = (
+            filtered_report.groupby("sector")["attention_score"]
+            .mean().sort_values(ascending=False)
+        )
+        st.bar_chart(sector_attention)
+    st.markdown("**Cinco empresas com maior prioridade de revisão**")
+    st.dataframe(
+        filtered_report.nlargest(5, "attention_score")[
+            ["company", "sector", "canton", "attention_score", "priority_band", "reasons"]
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    st.subheader("⚖️ Comparador de empresas")
+    st.caption("Compare indicadores de duas empresas do conjunto filtrado.")
+    options = filtered_report["company"].drop_duplicates().tolist()
+    if len(options) < 2:
+        st.info("Selecione pelo menos duas empresas nos filtros para comparar.")
+    else:
+        first, second = st.columns(2)
+        with first:
+            company_a = st.selectbox("Empresa A", options, index=0, key="compare-a")
+        with second:
+            company_b = st.selectbox("Empresa B", options, index=1, key="compare-b")
+        if company_a == company_b:
+            st.warning("Escolha duas empresas diferentes.")
+        else:
+            compare_columns = {
+                "attention_score": "Pontuação de atenção (0–100)",
+                "revenue_growth_pct": "Crescimento da receita (%)",
+                "ebitda_margin_pct": "Margem EBITDA (%)",
+                "debt_to_equity": "Dívida / patrimônio",
+                "current_ratio": "Liquidez corrente",
+                "customer_concentration_pct": "Concentração de clientes (%)",
+                "late_payment_pct": "Pagamentos atrasados (%)",
+            }
+            comparison = filtered_report.set_index("company").loc[
+                [company_a, company_b], list(compare_columns)
+            ].rename(columns=compare_columns).T
+            st.dataframe(comparison.round(2), use_container_width=True)
+            st.caption(
+                "Indicadores diferentes exigem interpretações diferentes: "
+                "crescimento e liquidez não são equivalentes a dívida e atrasos."
+            )
+
     st.subheader("Company drill-down")
     selected_company = st.selectbox(
         "Select a company",
