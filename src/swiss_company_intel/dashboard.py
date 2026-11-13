@@ -222,6 +222,37 @@ def main() -> None:
         hide_index=True,
     )
 
+    st.subheader("🗺️ Panorama regional da Suíça")
+    st.caption(
+        "Cantões são divisões administrativas suíças. Esta visão resume "
+        "somente as empresas presentes no conjunto filtrado, não todas as "
+        "empresas existentes em cada região."
+    )
+    canton_summary = (
+        filtered_report.groupby("canton", as_index=False)
+        .agg(
+            empresas=("company", "count"),
+            atencao_media=("attention_score", "mean"),
+            atencao_maxima=("attention_score", "max"),
+            setores=("sector", "nunique"),
+        )
+        .sort_values(["atencao_media", "empresas"], ascending=[False, False])
+    )
+    canton_summary["atencao_media"] = canton_summary["atencao_media"].round(1)
+    canton_summary["atencao_maxima"] = canton_summary["atencao_maxima"].round(1)
+    region_left, region_right = st.columns(2)
+    with region_left:
+        st.markdown("**Quantidade de empresas por cantão**")
+        st.bar_chart(canton_summary.set_index("canton")["empresas"])
+    with region_right:
+        st.markdown("**Pontuação média de atenção por cantão**")
+        st.bar_chart(canton_summary.set_index("canton")["atencao_media"])
+    st.dataframe(canton_summary, use_container_width=True, hide_index=True)
+    st.caption(
+        "Atenção: médias regionais de uma pequena amostra fictícia não "
+        "representam o desempenho econômico real dos cantões."
+    )
+
     st.subheader("⚖️ Comparador de empresas")
     st.caption("Compare indicadores de duas empresas do conjunto filtrado.")
     options = filtered_report["company"].drop_duplicates().tolist()
