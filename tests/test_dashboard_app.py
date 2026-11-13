@@ -30,3 +30,17 @@ def test_saved_runs_are_isolated_between_browser_sessions():
     first.run(timeout=30)
     assert not first.exception
     assert any(item.label == "Browse saved analysis runs" for item in first.expander)
+
+
+def test_dashboard_navigation_tabs_and_exports_are_visible():
+    app = AppTest.from_file(str(SCRIPT)).run(timeout=30)
+    assert not app.exception
+    labels = [tab.label for tab in app.tabs]
+    assert labels == [
+        "📊 Visão geral", "🏢 Empresas", "🧪 Simulador",
+        "🗺️ Regiões", "📄 Relatórios", "📚 Fontes e metodologia",
+    ]
+    downloads = [item.label for item in app.get("button") if "Baixar relatório" in item.label]
+    assert downloads or any(
+        "Baixar relatório" in str(item) for item in app.get("button")
+    )
