@@ -2,7 +2,7 @@
 
 A Python-first portfolio project for **screening, benchmarking and prioritizing Swiss companies**.
 
-**[Open the Streamlit dashboard](https://swiss-company-intelligence-izcrwdlw9gepzap2dd85c3.streamlit.app/)** — public demo (initial load verified on 9 November 2026).
+**[Open the Streamlit dashboard](https://swiss-company-intelligence-izcrwdlw9gepzap2dd85c3.streamlit.app/)** — public demo (user confirmed successful access and five manual feature checks on 13 November 2026).
 
 The project solves a realistic business problem:
 
@@ -12,6 +12,29 @@ It combines deterministic business rules with statistical anomaly detection and 
 
 > **Important:** the included CSV is **synthetic demo data**. Company names are used only to make the example recognizable; the financial figures are not reported company results.
 
+## Demonstração e funcionalidades
+
+O painel está organizado em seis abas:
+
+| Aba | O que você pode fazer |
+| --- | --- |
+| 📊 Visão geral | Ver métricas, gráficos por setor e as cinco empresas com maior prioridade de revisão |
+| 🏢 Empresas | Comparar duas empresas, consultar justificativas, ranking e histórico |
+| 🧪 Simulador | Alterar seis indicadores hipotéticos e recalcular a pontuação sem modificar os dados originais |
+| 🗺️ Regiões | Comparar quantidades e médias de atenção por cantão suíço |
+| 📄 Relatórios | Baixar CSV filtrado, relatório executivo em HTML e snapshots temporários |
+| 📚 Fontes e metodologia | Consultar a explicação do modelo e metadados oficiais suíços quando disponíveis |
+
+**Como obter um PDF:** na aba *Relatórios*, baixe o relatório executivo HTML, abra-o no navegador e selecione **Imprimir → Salvar como PDF**. O aplicativo não gera um PDF binário diretamente.
+
+**Dados e limites:** o conjunto de exemplo tem métricas sintéticas. A análise não verifica o desempenho financeiro real das empresas, não estima insolvência e não recomenda investimentos. Os metadados oficiais suíços são consultados separadamente e não validam as métricas fictícias.
+
+### Validação realizada
+
+- CI do GitHub aprovou as alterações recentes, incluindo testes automatizados da navegação e do relatório.
+- Em 13 de novembro de 2026, a pessoa responsável pelo projeto confirmou que o site abriu e concluiu cinco testes manuais: abas, gráficos, simulador, exportação do relatório e filtros.
+- Essa validação confirma o funcionamento observado naquela sessão, mas não substitui monitoramento contínuo nem testes com todas as planilhas possíveis.
+
 ## Why this is a strong Python portfolio project
 
 - `pandas` data pipelines
@@ -19,7 +42,7 @@ It combines deterministic business rules with statistical anomaly detection and 
 - validation and normalization
 - feature engineering
 - robust z-score anomaly detection
-- explainable risk scoring
+- explainable attention scoring
 - CLI with `typer`
 - terminal UX with `rich`
 - report generation
@@ -98,9 +121,9 @@ The dashboard supports CSV uploads, portfolio metrics, company ranking, sector s
 1. Start the dashboard and optionally upload a CSV. Without an upload, it uses the bundled synthetic example dataset.
 2. Optionally upload a JSON file of scoring weights; use **Active scoring weights** to inspect the configuration.
 3. Use **Search company name** (case-insensitive), **Canton**, **Sector**, **Priority band**, and **Minimum attention score** together to narrow the results.
-4. Review the company drill-down, explanations, rankings, and sector overview. **Download filtered results (CSV)** exports only the current filtered rows.
-5. Choose **Save analysis snapshot** to persist the **complete analyzed report** (not just the filtered subset) to a temporary SQLite database isolated to the current browser session.
-6. Under **Browse saved analysis runs**, select a run to inspect or download its historical scores. Historical snapshots are not recalculated when scoring weights or input data change.
+4. Open the **Empresas** tab for company details, explanations, rankings, and sector overview. **Download filtered results (CSV)** exports only the current filtered rows.
+5. In **Relatórios**, choose **Save analysis snapshot** to persist the **complete analyzed report** (not just the filtered subset) to a temporary SQLite database isolated to the current browser session.
+6. In **Relatórios**, under **Browse saved analysis runs**, select a run to inspect or download its historical scores. Historical snapshots are not recalculated when scoring weights or input data change.
 
 CSV uploads must include company, canton, sector, and the numeric fields shown in `data/sample_companies.csv`. The importer validates missing/duplicate columns, Swiss canton codes, numeric values, and percentage bounds. Uploaded CSV data is validated in memory without a shared temporary file.
 
@@ -124,7 +147,7 @@ The repository is prepared for deployment with [Streamlit Community Cloud](https
 2. Choose repository `marcellabongiolo/swiss-company-intelligence`, branch `main`, and main file path `src/swiss_company_intel/dashboard.py`.
 3. Deploy. The root `requirements.txt` installs the local Python package so imports from the `src/` layout work.
 4. Open the generated URL and verify the synthetic dataset loads, filters work, and CSV downloads succeed.
-5. After the app is working, add its actual URL to the GitHub repository's **About → Website** field and optionally to the top of this README. Do not invent a deployment URL.
+5. After the app is working, optionally add its verified URL to the GitHub repository's **About → Website** field. The verified demo link is already at the top of this README.
 
 **Session history and privacy:** Dashboard snapshots use a separate temporary SQLite database for each Streamlit session. Visitors cannot browse another session's runs through this UI. History is not durable and is not restored in a new session, including with Docker Compose. Download snapshots to keep them. The standalone `AnalysisStore` Python API still supports explicit persistent paths for trusted local workflows; a multi-user persistent service requires authenticated ownership and an external database. Do not upload confidential company data to a public demo.
 
