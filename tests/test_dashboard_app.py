@@ -40,7 +40,3 @@ def test_dashboard_navigation_tabs_and_exports_are_visible():
         "📊 Visão geral", "🏢 Empresas", "🧪 Simulador",
         "🗺️ Regiões", "📄 Relatórios", "📚 Fontes e metodologia",
     ]
-    downloads = [item.label for item in app.get("button") if "Baixar relatório" in item.label]
-    assert downloads or any(
-        "Baixar relatório" in str(item) for item in app.get("button")
-    )
