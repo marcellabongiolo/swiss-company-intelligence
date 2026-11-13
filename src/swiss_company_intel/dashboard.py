@@ -44,8 +44,8 @@ def main() -> None:
 
     st.title("Swiss Company Intelligence 🇨🇭")
     st.caption(
-        "Explainable company screening with Python, sector-relative anomaly detection "
-        "and optional official Swiss FSO metadata."
+        "Análise explicável de empresas, comparação por setor e acesso opcional "
+        "a metadados oficiais da Suíça."
     )
 
     st.info(
@@ -60,13 +60,13 @@ def main() -> None:
     with st.expander("📖 Como usar o painel — guia rápido", expanded=True):
         st.markdown(
             "1. **Comece pelo exemplo:** o painel já carrega uma planilha fictícia. "
-            "Não é necessário enviar arquivos.\\n"
+            "Não é necessário enviar arquivos.\n"
             "2. **Veja a pontuação de atenção (0–100):** quanto maior, mais sinais "
-            "merecem investigação. Isso não é uma nota de qualidade da empresa.\\n"
-            "3. **Escolha uma empresa** em *Company drill-down* para entender "
-            "os indicadores e os motivos da sinalização.\\n"
+            "merecem investigação. Isso não é uma nota de qualidade da empresa.\n"
+            "3. **Escolha uma empresa** na aba *Empresas* para entender "
+            "os indicadores e os motivos da sinalização.\n"
             "4. **Use os filtros na barra lateral** para pesquisar por empresa, "
-            "cantão, setor ou prioridade.\\n"
+            "cantão, setor ou prioridade.\n"
             "5. **Compare os gráficos** e baixe o CSV com os resultados filtrados."
         )
         st.caption(
@@ -186,7 +186,7 @@ def main() -> None:
             filtered_report.nlargest(5, "attention_score")[
                 ["company", "sector", "canton", "attention_score", "priority_band", "reasons"]
             ],
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -217,7 +217,7 @@ def main() -> None:
                 comparison = filtered_report.set_index("company").loc[
                     [company_a, company_b], list(compare_columns)
                 ].rename(columns=compare_columns).T
-                st.dataframe(comparison.round(2), use_container_width=True)
+                st.dataframe(comparison.round(2), width="stretch")
                 st.caption(
                     "Indicadores diferentes exigem interpretações diferentes: "
                     "crescimento e liquidez não são equivalentes a dívida e atrasos."
@@ -242,14 +242,14 @@ def main() -> None:
         history = store.company_history(selected_company)
         if not history.empty:
             with st.expander("Historical snapshots"):
-                st.dataframe(history, use_container_width=True, hide_index=True)
+                st.dataframe(history, width="stretch", hide_index=True)
                 st.caption("Attention score by analysis run")
                 st.line_chart(history_chart_data(history))
 
         st.subheader("Classificação de atenção")
         st.dataframe(
             filtered_report.head(top_n),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -267,7 +267,7 @@ def main() -> None:
             )
             .sort_values("avg_attention", ascending=False)
         )
-        st.dataframe(sector_summary, use_container_width=True, hide_index=True)
+        st.dataframe(sector_summary, width="stretch", hide_index=True)
 
     with tab_simulator:
         st.subheader("🧪 Simulador de cenários hipotéticos")
@@ -367,7 +367,7 @@ def main() -> None:
         with region_right:
             st.markdown("**Pontuação média de atenção por cantão**")
             st.bar_chart(canton_summary.set_index("canton")["atencao_media"])
-        st.dataframe(canton_summary, use_container_width=True, hide_index=True)
+        st.dataframe(canton_summary, width="stretch", hide_index=True)
         st.caption(
             "Atenção: médias regionais de uma pequena amostra fictícia não "
             "representam o desempenho econômico real dos cantões."
@@ -402,7 +402,7 @@ def main() -> None:
             if not recent_runs.empty:
                 st.caption(f"Saved runs: {len(recent_runs)} shown")
                 with st.expander("Browse saved analysis runs"):
-                    st.dataframe(recent_runs, use_container_width=True, hide_index=True)
+                    st.dataframe(recent_runs, width="stretch", hide_index=True)
                     selected_run_id = st.selectbox(
                         "View saved run",
                         options=recent_runs["id"].astype(int).tolist(),
@@ -411,7 +411,7 @@ def main() -> None:
                     saved_report = store.run_details(selected_run_id)
                     st.dataframe(
                         saved_report,
-                        use_container_width=True,
+                        width="stretch",
                         hide_index=True,
                     )
                     st.download_button(
@@ -438,7 +438,7 @@ def main() -> None:
                     st.success(f"Connected to FSO cube: {ENTERPRISE_STATISTICS.name}")
                     st.caption(metadata.get("title", ENTERPRISE_STATISTICS.description))
                     variables = pd.DataFrame(client.variable_summary(metadata))
-                    st.dataframe(variables, use_container_width=True, hide_index=True)
+                    st.dataframe(variables, width="stretch", hide_index=True)
                 except Exception as exc:
                     st.warning(
                         "The live FSO endpoint could not be reached from this environment. "
