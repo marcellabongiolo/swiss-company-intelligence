@@ -322,9 +322,25 @@ def main() -> None:
                     f"The local analysis still works normally. Details: {exc}"
                 )
 
+    with st.expander("🔎 Como a pontuação é calculada?"):
+        st.markdown(
+            "O sistema combina regras de análise de indicadores com a detecção "
+            "de valores incomuns em empresas do mesmo setor. Entre os sinais "
+            "estão endividamento, liquidez, concentração de clientes, atrasos "
+            "de pagamento, queda de receita e anomalias estatísticas. "
+            "Os pesos podem ser configurados por arquivo JSON."
+        )
+        st.markdown(
+            "**0–25:** baixa atenção · **acima de 25 até 50:** moderada · "
+            "**acima de 50 até 75:** alta · **acima de 75 até 100:** crítica."
+        )
+        st.warning(
+            "A pontuação é uma heurística de triagem, não uma classificação "
+            "de crédito, previsão de insolvência ou aconselhamento financeiro."
+        )
     st.caption(
-        "Attention scores are transparent screening heuristics, not credit ratings "
-        "or investment advice."
+        "Demonstração com dados sintéticos. As estatísticas oficiais suíças "
+        "são uma fonte separada e não validam os números fictícios das empresas."
     )
 
 
