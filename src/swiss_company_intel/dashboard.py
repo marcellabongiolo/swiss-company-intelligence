@@ -285,28 +285,34 @@ def main() -> None:
         sim_left, sim_right = st.columns(2)
         with sim_left:
             simulated_growth = st.number_input(
-                "Crescimento da receita (%)", min_value=-100.0, max_value=200.0,
+                "Crescimento da receita (%)", min_value=min(-100.0, float(original_row["revenue_growth_pct"])),
+                max_value=max(200.0, float(original_row["revenue_growth_pct"])),
                 value=float(original_row["revenue_growth_pct"]), step=1.0,
             )
             simulated_debt = st.number_input(
-                "Dívida / patrimônio", min_value=0.0, max_value=20.0,
+                "Dívida / patrimônio", min_value=min(0.0, float(original_row["debt_to_equity"])),
+                max_value=max(20.0, float(original_row["debt_to_equity"])),
                 value=float(original_row["debt_to_equity"]), step=0.1,
             )
             simulated_liquidity = st.number_input(
-                "Liquidez corrente", min_value=0.0, max_value=20.0,
+                "Liquidez corrente", min_value=min(0.0, float(original_row["current_ratio"])),
+                max_value=max(20.0, float(original_row["current_ratio"])),
                 value=float(original_row["current_ratio"]), step=0.1,
             )
         with sim_right:
             simulated_concentration = st.number_input(
-                "Concentração de clientes (%)", min_value=0.0, max_value=100.0,
+                "Concentração de clientes (%)", min_value=min(0.0, float(original_row["customer_concentration_pct"])),
+                max_value=max(100.0, float(original_row["customer_concentration_pct"])),
                 value=float(original_row["customer_concentration_pct"]), step=1.0,
             )
             simulated_late = st.number_input(
-                "Pagamentos atrasados (%)", min_value=0.0, max_value=100.0,
+                "Pagamentos atrasados (%)", min_value=min(0.0, float(original_row["late_payment_pct"])),
+                max_value=max(100.0, float(original_row["late_payment_pct"])),
                 value=float(original_row["late_payment_pct"]), step=1.0,
             )
             simulated_employees = st.number_input(
-                "Crescimento dos funcionários (%)", min_value=-100.0, max_value=200.0,
+                "Crescimento dos funcionários (%)", min_value=min(-100.0, float(original_row["employee_growth_pct"])),
+                max_value=max(200.0, float(original_row["employee_growth_pct"])),
                 value=float(original_row["employee_growth_pct"]), step=1.0,
             )
         scenario_data = companies.copy()
