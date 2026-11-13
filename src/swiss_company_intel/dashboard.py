@@ -47,6 +47,33 @@ def main() -> None:
         "and optional official Swiss FSO metadata."
     )
 
+    st.info(
+        "🇨🇭 **O que este site faz?** Ele compara indicadores financeiros e operacionais "
+        "de empresas suíças e destaca quais merecem uma análise mais cuidadosa. "
+        "**Não é uma previsão de falência nem uma recomendação de investimento.**"
+    )
+    st.warning(
+        "Os dados financeiros das empresas no exemplo são **sintéticos (inventados)**. "
+        "Os nomes das empresas não representam resultados financeiros reais."
+    )
+    with st.expander("📖 Como usar o painel — guia rápido", expanded=True):
+        st.markdown(
+            "1. **Comece pelo exemplo:** o painel já carrega uma planilha fictícia. "
+            "Não é necessário enviar arquivos.\\n"
+            "2. **Veja a pontuação de atenção (0–100):** quanto maior, mais sinais "
+            "merecem investigação. Isso não é uma nota de qualidade da empresa.\\n"
+            "3. **Escolha uma empresa** em *Company drill-down* para entender "
+            "os indicadores e os motivos da sinalização.\\n"
+            "4. **Use os filtros na barra lateral** para pesquisar por empresa, "
+            "cantão, setor ou prioridade.\\n"
+            "5. **Compare os gráficos** e baixe o CSV com os resultados filtrados."
+        )
+        st.caption(
+            "Termos úteis: cantão = divisão administrativa suíça; setor = ramo "
+            "de atividade; benchmark = comparação com empresas semelhantes; "
+            "anomalia = valor incomum que merece verificação."
+        )
+
     with st.sidebar:
         st.header("Portfolio")
         uploaded = st.file_uploader("Upload a company CSV", type=["csv"])
@@ -157,6 +184,8 @@ def main() -> None:
         "High / critical",
         int(filtered_report["priority_band"].isin(["high", "critical"]).sum()),
     )
+
+    st.caption("Interpretação: pontuação mais alta = maior prioridade de revisão, não maior risco comprovado.")
 
     st.subheader("Company drill-down")
     selected_company = st.selectbox(
