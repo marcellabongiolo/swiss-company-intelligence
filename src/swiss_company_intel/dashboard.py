@@ -76,7 +76,7 @@ def main() -> None:
         )
 
     with st.sidebar:
-        st.header("Portfolio")
+        st.header("Dados da análise")
         uploaded = st.file_uploader("Upload a company CSV", type=["csv"])
         uploaded_weights = st.file_uploader(
             "Optional scoring weights JSON",
@@ -107,7 +107,7 @@ def main() -> None:
         with st.expander("Active scoring weights"):
             st.json(asdict(weights))
 
-        st.header("Filters")
+        st.header("Filtros")
         company_query = st.text_input("Search company name", placeholder="Company name")
         selected_cantons = st.multiselect(
             "Canton",
@@ -136,323 +136,335 @@ def main() -> None:
         st.warning("No companies match the selected filters.")
         st.stop()
 
-    st.download_button(
-        "Download filtered results (CSV)",
-        data=report_to_csv_bytes(filtered_report),
-        file_name="swiss_company_filtered_report.csv",
-        mime="text/csv",
-    )
-
-    st.download_button(
-        "📄 Baixar relatório executivo (HTML para imprimir em PDF)",
-        data=executive_report_html(filtered_report),
-        file_name="swiss_company_relatorio_executivo.html",
-        mime="text/html",
-        help="Abra o HTML baixado no navegador e escolha Imprimir → Salvar como PDF.",
-    )
-
     store = _session_store()
-    st.caption("Saved snapshots are private to this browser session and temporary.")
-
-    save_col, history_col = st.columns([1, 2])
-    with save_col:
-        if st.button("Save analysis snapshot"):
-            run_id = store.save_analysis(report, source="streamlit")
-            st.success(f"Saved analysis run #{run_id}")
-
-    with history_col:
-        recent_runs = store.list_runs(limit=5)
-        if not recent_runs.empty:
-            st.caption(f"Saved runs: {len(recent_runs)} shown")
-            with st.expander("Browse saved analysis runs"):
-                st.dataframe(recent_runs, use_container_width=True, hide_index=True)
-                selected_run_id = st.selectbox(
-                    "View saved run",
-                    options=recent_runs["id"].astype(int).tolist(),
-                    format_func=lambda run_id: f"Run #{run_id}",
-                )
-                saved_report = store.run_details(selected_run_id)
-                st.dataframe(
-                    saved_report,
-                    use_container_width=True,
-                    hide_index=True,
-                )
-                st.download_button(
-                    "Download saved run (CSV)",
-                    data=report_to_csv_bytes(saved_report),
-                    file_name=f"swiss_company_run_{selected_run_id}.csv",
-                    mime="text/csv",
-                    key=f"download-run-{selected_run_id}",
-                )
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Companies", len(filtered_report))
-    c2.metric("Sectors", filtered_report["sector"].nunique())
-    c3.metric("Average attention", f"{filtered_report['attention_score'].mean():.1f}")
-    c4.metric(
-        "High / critical",
-        int(filtered_report["priority_band"].isin(["high", "critical"]).sum()),
+    st.caption("Navegue pelas áreas abaixo. Os filtros da barra lateral afetam as análises e os relatórios.")
+    tab_overview, tab_companies, tab_simulator, tab_regions, tab_reports, tab_sources = st.tabs(
+        ["📊 Visão geral", "🏢 Empresas", "🧪 Simulador", "🗺️ Regiões",
+         "📄 Relatórios", "📚 Fontes e metodologia"]
     )
 
-    st.caption("Interpretação: pontuação mais alta = maior prioridade de revisão, não maior risco comprovado.")
-
-    st.subheader("🧭 Visão geral: prioridades de análise")
-    st.caption(
-        "Pontuações mais altas significam mais sinais para investigar, não uma "
-        "probabilidade de falência. Os dados das empresas são fictícios."
-    )
-    band_order = ["low", "moderate", "high", "critical"]
-    band_names = {
-        "low": "Baixa", "moderate": "Moderada",
-        "high": "Alta", "critical": "Crítica",
-    }
-    distribution = (
-        filtered_report["priority_band"].value_counts()
-        .reindex(band_order, fill_value=0)
-        .rename(index=band_names)
-    )
-    chart_left, chart_right = st.columns(2)
-    with chart_left:
-        st.markdown("**Empresas por nível de atenção**")
-        st.bar_chart(distribution)
-    with chart_right:
-        st.markdown("**Atenção média por setor**")
-        sector_attention = (
-            filtered_report.groupby("sector")["attention_score"]
-            .mean().sort_values(ascending=False)
+    with tab_overview:
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Companies", len(filtered_report))
+        c2.metric("Sectors", filtered_report["sector"].nunique())
+        c3.metric("Average attention", f"{filtered_report['attention_score'].mean():.1f}")
+        c4.metric(
+            "High / critical",
+            int(filtered_report["priority_band"].isin(["high", "critical"]).sum()),
         )
-        st.bar_chart(sector_attention)
-    st.markdown("**Cinco empresas com maior prioridade de revisão**")
-    st.dataframe(
-        filtered_report.nlargest(5, "attention_score")[
-            ["company", "sector", "canton", "attention_score", "priority_band", "reasons"]
-        ],
-        use_container_width=True,
-        hide_index=True,
-    )
 
-    st.subheader("🗺️ Panorama regional da Suíça")
-    st.caption(
-        "Cantões são divisões administrativas suíças. Esta visão resume "
-        "somente as empresas presentes no conjunto filtrado, não todas as "
-        "empresas existentes em cada região."
-    )
-    canton_summary = (
-        filtered_report.groupby("canton", as_index=False)
-        .agg(
-            empresas=("company", "count"),
-            atencao_media=("attention_score", "mean"),
-            atencao_maxima=("attention_score", "max"),
-            setores=("sector", "nunique"),
+        st.caption("Interpretação: pontuação mais alta = maior prioridade de revisão, não maior risco comprovado.")
+
+        st.subheader("🧭 Visão geral: prioridades de análise")
+        st.caption(
+            "Pontuações mais altas significam mais sinais para investigar, não uma "
+            "probabilidade de falência. Os dados das empresas são fictícios."
         )
-        .sort_values(["atencao_media", "empresas"], ascending=[False, False])
-    )
-    canton_summary["atencao_media"] = canton_summary["atencao_media"].round(1)
-    canton_summary["atencao_maxima"] = canton_summary["atencao_maxima"].round(1)
-    region_left, region_right = st.columns(2)
-    with region_left:
-        st.markdown("**Quantidade de empresas por cantão**")
-        st.bar_chart(canton_summary.set_index("canton")["empresas"])
-    with region_right:
-        st.markdown("**Pontuação média de atenção por cantão**")
-        st.bar_chart(canton_summary.set_index("canton")["atencao_media"])
-    st.dataframe(canton_summary, use_container_width=True, hide_index=True)
-    st.caption(
-        "Atenção: médias regionais de uma pequena amostra fictícia não "
-        "representam o desempenho econômico real dos cantões."
-    )
-
-    st.subheader("⚖️ Comparador de empresas")
-    st.caption("Compare indicadores de duas empresas do conjunto filtrado.")
-    options = filtered_report["company"].drop_duplicates().tolist()
-    if len(options) < 2:
-        st.info("Selecione pelo menos duas empresas nos filtros para comparar.")
-    else:
-        first, second = st.columns(2)
-        with first:
-            company_a = st.selectbox("Empresa A", options, index=0, key="compare-a")
-        with second:
-            company_b = st.selectbox("Empresa B", options, index=1, key="compare-b")
-        if company_a == company_b:
-            st.warning("Escolha duas empresas diferentes.")
-        else:
-            compare_columns = {
-                "attention_score": "Pontuação de atenção (0–100)",
-                "revenue_growth_pct": "Crescimento da receita (%)",
-                "ebitda_margin_pct": "Margem EBITDA (%)",
-                "debt_to_equity": "Dívida / patrimônio",
-                "current_ratio": "Liquidez corrente",
-                "customer_concentration_pct": "Concentração de clientes (%)",
-                "late_payment_pct": "Pagamentos atrasados (%)",
-            }
-            comparison = filtered_report.set_index("company").loc[
-                [company_a, company_b], list(compare_columns)
-            ].rename(columns=compare_columns).T
-            st.dataframe(comparison.round(2), use_container_width=True)
-            st.caption(
-                "Indicadores diferentes exigem interpretações diferentes: "
-                "crescimento e liquidez não são equivalentes a dívida e atrasos."
+        band_order = ["low", "moderate", "high", "critical"]
+        band_names = {
+            "low": "Baixa", "moderate": "Moderada",
+            "high": "Alta", "critical": "Crítica",
+        }
+        distribution = (
+            filtered_report["priority_band"].value_counts()
+            .reindex(band_order, fill_value=0)
+            .rename(index=band_names)
+        )
+        chart_left, chart_right = st.columns(2)
+        with chart_left:
+            st.markdown("**Empresas por nível de atenção**")
+            st.bar_chart(distribution)
+        with chart_right:
+            st.markdown("**Atenção média por setor**")
+            sector_attention = (
+                filtered_report.groupby("sector")["attention_score"]
+                .mean().sort_values(ascending=False)
             )
-
-    st.subheader("🧪 Simulador de cenários hipotéticos")
-    st.caption(
-        "Altere indicadores de uma empresa e veja como a pontuação mudaria. "
-        "A simulação é educativa, não é uma previsão financeira."
-    )
-    simulation_company = st.selectbox(
-        "Empresa para simular", options=companies["company"].tolist(),
-        key="simulation-company",
-    )
-    original_row = companies.loc[
-        companies["company"] == simulation_company
-    ].iloc[0]
-    sim_left, sim_right = st.columns(2)
-    with sim_left:
-        simulated_growth = st.number_input(
-            "Crescimento da receita (%)", min_value=-100.0, max_value=200.0,
-            value=float(original_row["revenue_growth_pct"]), step=1.0,
+            st.bar_chart(sector_attention)
+        st.markdown("**Cinco empresas com maior prioridade de revisão**")
+        st.dataframe(
+            filtered_report.nlargest(5, "attention_score")[
+                ["company", "sector", "canton", "attention_score", "priority_band", "reasons"]
+            ],
+            use_container_width=True,
+            hide_index=True,
         )
-        simulated_debt = st.number_input(
-            "Dívida / patrimônio", min_value=0.0, max_value=20.0,
-            value=float(original_row["debt_to_equity"]), step=0.1,
-        )
-        simulated_liquidity = st.number_input(
-            "Liquidez corrente", min_value=0.0, max_value=20.0,
-            value=float(original_row["current_ratio"]), step=0.1,
-        )
-    with sim_right:
-        simulated_concentration = st.number_input(
-            "Concentração de clientes (%)", min_value=0.0, max_value=100.0,
-            value=float(original_row["customer_concentration_pct"]), step=1.0,
-        )
-        simulated_late = st.number_input(
-            "Pagamentos atrasados (%)", min_value=0.0, max_value=100.0,
-            value=float(original_row["late_payment_pct"]), step=1.0,
-        )
-        simulated_employees = st.number_input(
-            "Crescimento dos funcionários (%)", min_value=-100.0, max_value=200.0,
-            value=float(original_row["employee_growth_pct"]), step=1.0,
-        )
-    scenario_data = companies.copy()
-    scenario_mask = scenario_data["company"] == simulation_company
-    scenario_data.loc[scenario_mask, "revenue_growth_pct"] = simulated_growth
-    scenario_data.loc[scenario_mask, "debt_to_equity"] = simulated_debt
-    scenario_data.loc[scenario_mask, "current_ratio"] = simulated_liquidity
-    scenario_data.loc[scenario_mask, "customer_concentration_pct"] = simulated_concentration
-    scenario_data.loc[scenario_mask, "late_payment_pct"] = simulated_late
-    scenario_data.loc[scenario_mask, "employee_growth_pct"] = simulated_employees
-    scenario_report = analyzer.analyze(scenario_data)
-    original_score = float(
-        analyzed.loc[analyzed["company"] == simulation_company, "attention_score"].iloc[0]
-    )
-    simulated_result = scenario_report.loc[
-        scenario_report["company"] == simulation_company
-    ].iloc[0]
-    scenario_score = float(simulated_result["attention_score"])
-    score_left, score_right = st.columns(2)
-    with score_left:
-        st.metric("Pontuação original", f"{original_score:.1f} / 100")
-    with score_right:
-        st.metric(
-            "Pontuação simulada", f"{scenario_score:.1f} / 100",
-            delta=f"{scenario_score - original_score:+.1f} pontos",
-            delta_color="inverse",
-        )
-    st.write(f"**Sinais no cenário:** {simulated_result['reasons']}")
-    st.caption(
-        "A simulação recalcula a análise de todo o conjunto, inclusive anomalias "
-        "relativas ao setor. Os dados carregados, o relatório original e o "
-        "histórico salvo permanecem inalterados."
-    )
 
-    st.subheader("Company drill-down")
-    selected_company = st.selectbox(
-        "Select a company",
-        options=filtered_report["company"].tolist(),
-    )
-    company = filtered_report.loc[
-        filtered_report["company"] == selected_company
-    ].iloc[0]
-
-    d1, d2, d3, d4 = st.columns(4)
-    d1.metric("Attention score", f"{company['attention_score']:.1f}")
-    d2.metric("Priority", str(company["priority_band"]).title())
-    d3.metric("Revenue growth", f"{company['revenue_growth_pct']:.1f}%")
-    d4.metric("Debt / equity", f"{company['debt_to_equity']:.2f}x")
-    st.write(f"**Why it was flagged:** {company['reasons']}")
-
-    history = store.company_history(selected_company)
-    if not history.empty:
-        with st.expander("Historical snapshots"):
-            st.dataframe(history, use_container_width=True, hide_index=True)
-            st.caption("Attention score by analysis run")
-            st.line_chart(history_chart_data(history))
-
-    st.subheader("Attention ranking")
-    st.dataframe(
-        filtered_report.head(top_n),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    st.subheader("Attention score by company")
-    chart = filtered_report.head(top_n).set_index("company")[["attention_score"]]
-    st.bar_chart(chart)
-
-    st.subheader("Sector overview")
-    sector_summary = (
-        filtered_report.groupby("sector", as_index=False)
-        .agg(
-            companies=("company", "count"),
-            avg_attention=("attention_score", "mean"),
-            avg_growth=("revenue_growth_pct", "mean"),
-        )
-        .sort_values("avg_attention", ascending=False)
-    )
-    st.dataframe(sector_summary, use_container_width=True, hide_index=True)
-
-    st.divider()
-    st.subheader("Official Swiss FSO / BFS connection")
-    st.write(
-        "The project includes a provider for the Federal Statistical Office STAT-TAB "
-        "PxWeb API. This keeps official-data access separate from the scoring engine."
-    )
-
-    if st.button("Load official enterprise-statistics metadata"):
-        with st.spinner("Contacting the Federal Statistical Office..."):
-            try:
-                client = BFSClient()
-                metadata = client.get_metadata()
-                st.success(f"Connected to FSO cube: {ENTERPRISE_STATISTICS.name}")
-                st.caption(metadata.get("title", ENTERPRISE_STATISTICS.description))
-                variables = pd.DataFrame(client.variable_summary(metadata))
-                st.dataframe(variables, use_container_width=True, hide_index=True)
-            except Exception as exc:
-                st.warning(
-                    "The live FSO endpoint could not be reached from this environment. "
-                    f"The local analysis still works normally. Details: {exc}"
+    with tab_companies:
+        st.subheader("⚖️ Comparador de empresas")
+        st.caption("Compare indicadores de duas empresas do conjunto filtrado.")
+        options = filtered_report["company"].drop_duplicates().tolist()
+        if len(options) < 2:
+            st.info("Selecione pelo menos duas empresas nos filtros para comparar.")
+        else:
+            first, second = st.columns(2)
+            with first:
+                company_a = st.selectbox("Empresa A", options, index=0, key="compare-a")
+            with second:
+                company_b = st.selectbox("Empresa B", options, index=1, key="compare-b")
+            if company_a == company_b:
+                st.warning("Escolha duas empresas diferentes.")
+            else:
+                compare_columns = {
+                    "attention_score": "Pontuação de atenção (0–100)",
+                    "revenue_growth_pct": "Crescimento da receita (%)",
+                    "ebitda_margin_pct": "Margem EBITDA (%)",
+                    "debt_to_equity": "Dívida / patrimônio",
+                    "current_ratio": "Liquidez corrente",
+                    "customer_concentration_pct": "Concentração de clientes (%)",
+                    "late_payment_pct": "Pagamentos atrasados (%)",
+                }
+                comparison = filtered_report.set_index("company").loc[
+                    [company_a, company_b], list(compare_columns)
+                ].rename(columns=compare_columns).T
+                st.dataframe(comparison.round(2), use_container_width=True)
+                st.caption(
+                    "Indicadores diferentes exigem interpretações diferentes: "
+                    "crescimento e liquidez não são equivalentes a dívida e atrasos."
                 )
 
-    with st.expander("🔎 Como a pontuação é calculada?"):
-        st.markdown(
-            "O sistema combina regras de análise de indicadores com a detecção "
-            "de valores incomuns em empresas do mesmo setor. Entre os sinais "
-            "estão endividamento, liquidez, concentração de clientes, atrasos "
-            "de pagamento, queda de receita e anomalias estatísticas. "
-            "Os pesos podem ser configurados por arquivo JSON."
+        st.subheader("Detalhes da empresa")
+        selected_company = st.selectbox(
+            "Select a company",
+            options=filtered_report["company"].tolist(),
         )
-        st.markdown(
-            "**0–25:** baixa atenção · **acima de 25 até 50:** moderada · "
-            "**acima de 50 até 75:** alta · **acima de 75 até 100:** crítica."
+        company = filtered_report.loc[
+            filtered_report["company"] == selected_company
+        ].iloc[0]
+
+        d1, d2, d3, d4 = st.columns(4)
+        d1.metric("Attention score", f"{company['attention_score']:.1f}")
+        d2.metric("Priority", str(company["priority_band"]).title())
+        d3.metric("Revenue growth", f"{company['revenue_growth_pct']:.1f}%")
+        d4.metric("Debt / equity", f"{company['debt_to_equity']:.2f}x")
+        st.write(f"**Why it was flagged:** {company['reasons']}")
+
+        history = store.company_history(selected_company)
+        if not history.empty:
+            with st.expander("Historical snapshots"):
+                st.dataframe(history, use_container_width=True, hide_index=True)
+                st.caption("Attention score by analysis run")
+                st.line_chart(history_chart_data(history))
+
+        st.subheader("Classificação de atenção")
+        st.dataframe(
+            filtered_report.head(top_n),
+            use_container_width=True,
+            hide_index=True,
         )
-        st.warning(
-            "A pontuação é uma heurística de triagem, não uma classificação "
-            "de crédito, previsão de insolvência ou aconselhamento financeiro."
+
+        st.subheader("Attention score by company")
+        chart = filtered_report.head(top_n).set_index("company")[["attention_score"]]
+        st.bar_chart(chart)
+
+        st.subheader("Resumo por setor")
+        sector_summary = (
+            filtered_report.groupby("sector", as_index=False)
+            .agg(
+                companies=("company", "count"),
+                avg_attention=("attention_score", "mean"),
+                avg_growth=("revenue_growth_pct", "mean"),
+            )
+            .sort_values("avg_attention", ascending=False)
         )
-    st.caption(
-        "Demonstração com dados sintéticos. As estatísticas oficiais suíças "
-        "são uma fonte separada e não validam os números fictícios das empresas."
-    )
+        st.dataframe(sector_summary, use_container_width=True, hide_index=True)
+
+    with tab_simulator:
+        st.subheader("🧪 Simulador de cenários hipotéticos")
+        st.caption(
+            "Altere indicadores de uma empresa e veja como a pontuação mudaria. "
+            "A simulação é educativa, não é uma previsão financeira."
+        )
+        simulation_company = st.selectbox(
+            "Empresa para simular", options=companies["company"].tolist(),
+            key="simulation-company",
+        )
+        original_row = companies.loc[
+            companies["company"] == simulation_company
+        ].iloc[0]
+        sim_left, sim_right = st.columns(2)
+        with sim_left:
+            simulated_growth = st.number_input(
+                "Crescimento da receita (%)", min_value=-100.0, max_value=200.0,
+                value=float(original_row["revenue_growth_pct"]), step=1.0,
+            )
+            simulated_debt = st.number_input(
+                "Dívida / patrimônio", min_value=0.0, max_value=20.0,
+                value=float(original_row["debt_to_equity"]), step=0.1,
+            )
+            simulated_liquidity = st.number_input(
+                "Liquidez corrente", min_value=0.0, max_value=20.0,
+                value=float(original_row["current_ratio"]), step=0.1,
+            )
+        with sim_right:
+            simulated_concentration = st.number_input(
+                "Concentração de clientes (%)", min_value=0.0, max_value=100.0,
+                value=float(original_row["customer_concentration_pct"]), step=1.0,
+            )
+            simulated_late = st.number_input(
+                "Pagamentos atrasados (%)", min_value=0.0, max_value=100.0,
+                value=float(original_row["late_payment_pct"]), step=1.0,
+            )
+            simulated_employees = st.number_input(
+                "Crescimento dos funcionários (%)", min_value=-100.0, max_value=200.0,
+                value=float(original_row["employee_growth_pct"]), step=1.0,
+            )
+        scenario_data = companies.copy()
+        scenario_mask = scenario_data["company"] == simulation_company
+        scenario_data.loc[scenario_mask, "revenue_growth_pct"] = simulated_growth
+        scenario_data.loc[scenario_mask, "debt_to_equity"] = simulated_debt
+        scenario_data.loc[scenario_mask, "current_ratio"] = simulated_liquidity
+        scenario_data.loc[scenario_mask, "customer_concentration_pct"] = simulated_concentration
+        scenario_data.loc[scenario_mask, "late_payment_pct"] = simulated_late
+        scenario_data.loc[scenario_mask, "employee_growth_pct"] = simulated_employees
+        scenario_report = analyzer.analyze(scenario_data)
+        original_score = float(
+            analyzed.loc[analyzed["company"] == simulation_company, "attention_score"].iloc[0]
+        )
+        simulated_result = scenario_report.loc[
+            scenario_report["company"] == simulation_company
+        ].iloc[0]
+        scenario_score = float(simulated_result["attention_score"])
+        score_left, score_right = st.columns(2)
+        with score_left:
+            st.metric("Pontuação original", f"{original_score:.1f} / 100")
+        with score_right:
+            st.metric(
+                "Pontuação simulada", f"{scenario_score:.1f} / 100",
+                delta=f"{scenario_score - original_score:+.1f} pontos",
+                delta_color="inverse",
+            )
+        st.write(f"**Sinais no cenário:** {simulated_result['reasons']}")
+        st.caption(
+            "A simulação recalcula a análise de todo o conjunto, inclusive anomalias "
+            "relativas ao setor. Os dados carregados, o relatório original e o "
+            "histórico salvo permanecem inalterados."
+        )
+
+    with tab_regions:
+        st.subheader("🗺️ Panorama regional da Suíça")
+        st.caption(
+            "Cantões são divisões administrativas suíças. Esta visão resume "
+            "somente as empresas presentes no conjunto filtrado, não todas as "
+            "empresas existentes em cada região."
+        )
+        canton_summary = (
+            filtered_report.groupby("canton", as_index=False)
+            .agg(
+                empresas=("company", "count"),
+                atencao_media=("attention_score", "mean"),
+                atencao_maxima=("attention_score", "max"),
+                setores=("sector", "nunique"),
+            )
+            .sort_values(["atencao_media", "empresas"], ascending=[False, False])
+        )
+        canton_summary["atencao_media"] = canton_summary["atencao_media"].round(1)
+        canton_summary["atencao_maxima"] = canton_summary["atencao_maxima"].round(1)
+        region_left, region_right = st.columns(2)
+        with region_left:
+            st.markdown("**Quantidade de empresas por cantão**")
+            st.bar_chart(canton_summary.set_index("canton")["empresas"])
+        with region_right:
+            st.markdown("**Pontuação média de atenção por cantão**")
+            st.bar_chart(canton_summary.set_index("canton")["atencao_media"])
+        st.dataframe(canton_summary, use_container_width=True, hide_index=True)
+        st.caption(
+            "Atenção: médias regionais de uma pequena amostra fictícia não "
+            "representam o desempenho econômico real dos cantões."
+        )
+
+    with tab_reports:
+        st.download_button(
+            "Download filtered results (CSV)",
+            data=report_to_csv_bytes(filtered_report),
+            file_name="swiss_company_filtered_report.csv",
+            mime="text/csv",
+        )
+
+        st.download_button(
+            "📄 Baixar relatório executivo (HTML para imprimir em PDF)",
+            data=executive_report_html(filtered_report),
+            file_name="swiss_company_relatorio_executivo.html",
+            mime="text/html",
+            help="Abra o HTML baixado no navegador e escolha Imprimir → Salvar como PDF.",
+        )
+
+        st.caption("Saved snapshots are private to this browser session and temporary.")
+
+        save_col, history_col = st.columns([1, 2])
+        with save_col:
+            if st.button("Save analysis snapshot"):
+                run_id = store.save_analysis(report, source="streamlit")
+                st.success(f"Saved analysis run #{run_id}")
+
+        with history_col:
+            recent_runs = store.list_runs(limit=5)
+            if not recent_runs.empty:
+                st.caption(f"Saved runs: {len(recent_runs)} shown")
+                with st.expander("Browse saved analysis runs"):
+                    st.dataframe(recent_runs, use_container_width=True, hide_index=True)
+                    selected_run_id = st.selectbox(
+                        "View saved run",
+                        options=recent_runs["id"].astype(int).tolist(),
+                        format_func=lambda run_id: f"Run #{run_id}",
+                    )
+                    saved_report = store.run_details(selected_run_id)
+                    st.dataframe(
+                        saved_report,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                    st.download_button(
+                        "Download saved run (CSV)",
+                        data=report_to_csv_bytes(saved_report),
+                        file_name=f"swiss_company_run_{selected_run_id}.csv",
+                        mime="text/csv",
+                        key=f"download-run-{selected_run_id}",
+                    )
+
+    with tab_sources:
+        st.divider()
+        st.subheader("Official Swiss FSO / BFS connection")
+        st.write(
+            "The project includes a provider for the Federal Statistical Office STAT-TAB "
+            "PxWeb API. This keeps official-data access separate from the scoring engine."
+        )
+
+        if st.button("Load official enterprise-statistics metadata"):
+            with st.spinner("Contacting the Federal Statistical Office..."):
+                try:
+                    client = BFSClient()
+                    metadata = client.get_metadata()
+                    st.success(f"Connected to FSO cube: {ENTERPRISE_STATISTICS.name}")
+                    st.caption(metadata.get("title", ENTERPRISE_STATISTICS.description))
+                    variables = pd.DataFrame(client.variable_summary(metadata))
+                    st.dataframe(variables, use_container_width=True, hide_index=True)
+                except Exception as exc:
+                    st.warning(
+                        "The live FSO endpoint could not be reached from this environment. "
+                        f"The local analysis still works normally. Details: {exc}"
+                    )
+
+        with st.expander("🔎 Como a pontuação é calculada?"):
+            st.markdown(
+                "O sistema combina regras de análise de indicadores com a detecção "
+                "de valores incomuns em empresas do mesmo setor. Entre os sinais "
+                "estão endividamento, liquidez, concentração de clientes, atrasos "
+                "de pagamento, queda de receita e anomalias estatísticas. "
+                "Os pesos podem ser configurados por arquivo JSON."
+            )
+            st.markdown(
+                "**0–25:** baixa atenção · **acima de 25 até 50:** moderada · "
+                "**acima de 50 até 75:** alta · **acima de 75 até 100:** crítica."
+            )
+            st.warning(
+                "A pontuação é uma heurística de triagem, não uma classificação "
+                "de crédito, previsão de insolvência ou aconselhamento financeiro."
+            )
+        st.caption(
+            "Demonstração com dados sintéticos. As estatísticas oficiais suíças "
+            "são uma fonte separada e não validam os números fictícios das empresas."
+        )
 
 
 if __name__ == "__main__":
